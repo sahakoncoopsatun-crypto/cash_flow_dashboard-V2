@@ -142,6 +142,18 @@
 
                 <!-- Action Buttons in Nav -->
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Executive Read-Only Badge (Visible in Read-Only Mode) -->
+                    <div id="executive-badge" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs">
+                        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                        <span>โหมดผู้บริหาร (ดูได้อย่างเดียว)</span>
+                    </div>
+
+                    <!-- Executive Share Link Button (Visible in Admin Mode) -->
+                    <button onclick="openShareModal()" id="nav-share-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-xs cursor-pointer" title="สร้างลิงก์สำหรับผู้บริหาร (ดูข้อมูลได้อย่างเดียว)">
+                        <i class="fa-solid fa-share-nodes text-indigo-600"></i>
+                        <span class="hidden sm:inline">สร้างลิงก์ผู้บริหาร</span>
+                    </button>
+
                     <!-- Firebase Settings Button -->
                     <button onclick="openFirebaseModal()" id="nav-firebase-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 shadow-xs" title="ตั้งค่า Firebase Realtime Database">
                         <i class="fa-solid fa-fire text-amber-500"></i>
@@ -149,23 +161,23 @@
                     </button>
 
                     <!-- Add Record Button -->
-                    <button onclick="openRecordModal()" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3.5 py-2 rounded-lg font-medium text-sm transition-all shadow-sm shadow-primary-500/30">
+                    <button onclick="openRecordModal()" id="nav-add-record-btn" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3.5 py-2 rounded-lg font-medium text-sm transition-all shadow-sm shadow-primary-500/30 cursor-pointer">
                         <i class="fa-solid fa-plus text-xs"></i>
                         <span>บันทึกยอดประจำวัน</span>
                     </button>
                     
                     <!-- Export CSV Button -->
-                    <button onclick="exportCSV()" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200" title="ดาวน์โหลด CSV / Excel">
+                    <button onclick="exportCSV()" id="nav-export-btn" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="ดาวน์โหลด CSV / Excel">
                         <i class="fa-solid fa-file-csv text-base"></i>
                     </button>
 
                     <!-- Print Button -->
-                    <button onclick="window.print()" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200" title="พิมพ์รายงาน">
+                    <button onclick="window.print()" id="nav-print-btn" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="พิมพ์รายงาน">
                         <i class="fa-solid fa-print text-base"></i>
                     </button>
 
                     <!-- Reset Button -->
-                    <button onclick="resetSampleData()" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-slate-200" title="รีเซ็ตเป็นข้อมูลตัวอย่าง">
+                    <button onclick="resetSampleData()" id="nav-reset-btn" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="รีเซ็ตเป็นข้อมูลตัวอย่าง">
                         <i class="fa-solid fa-arrow-rotate-left text-sm"></i>
                     </button>
                 </div>
@@ -175,6 +187,34 @@
 
     <!-- Main Container -->
     <main class="flex-1 w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Executive Mode Welcome Banner (Shown only in Read-Only Mode) -->
+        <div id="executive-banner" class="hidden mb-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-indigo-900/50">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center text-lg border border-white/20 shadow-inner">
+                        <i class="fa-solid fa-briefcase text-indigo-300"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-base sm:text-lg flex flex-wrap items-center gap-2">
+                            <span>รายงานกระแสเงินสดสำหรับผู้บริหาร (Executive Dashboard)</span>
+                            <span class="text-[11px] font-semibold bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                <i class="fa-solid fa-eye text-[10px]"></i> ดูข้อมูลอย่างเดียว (Read-Only)
+                            </span>
+                        </h2>
+                        <p class="text-xs text-slate-300 mt-0.5">เชื่อมโยงข้อมูลจริงแบบ Real-time &bull; สามารถกรองดูข้อมูลรายวัน สัปดาห์ เดือน วิเคราะห์กราฟ และพิมพ์รายงานได้</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 no-print">
+                    <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+                        <i class="fa-solid fa-print"></i> พิมพ์รายงาน
+                    </button>
+                    <button onclick="exportCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+                        <i class="fa-solid fa-file-csv"></i> ส่งออก CSV
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Controls & View Mode Bar -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-2 border-b border-slate-200">
@@ -644,6 +684,80 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- Modal: สร้างลิงก์สำหรับผู้บริหาร (Executive Share Link) -->
+    <!-- ========================================== -->
+    <div id="shareModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden no-print transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl mx-4 overflow-hidden transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-indigo-50/90 to-blue-50/90">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-500/20">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">สร้างลิงก์สำหรับผู้บริหาร (Executive Link)</h3>
+                        <p class="text-xs text-slate-500">สำหรับส่งให้ผู้บริหารดูข้อมูลและกราฟได้อย่างเดียว โดยไม่สามารถบันทึกหรือแก้ไขได้</p>
+                    </div>
+                </div>
+                <button onclick="closeShareModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 space-y-4">
+                <!-- Share Link Box -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-link text-indigo-600"></i> ลิงก์สำหรับผู้บริหาร (คัดลอกส่งใน LINE / Email ได้ทันที):
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="share-link-input" readonly class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 font-mono focus:outline-none select-all" value="">
+                        <button onclick="copyShareLink()" id="copy-share-btn" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm shadow-indigo-500/20 whitespace-nowrap cursor-pointer">
+                            <i id="copy-share-icon" class="fa-regular fa-copy"></i>
+                            <span id="copy-share-text">คัดลอกลิงก์</span>
+                        </button>
+                    </div>
+                    <p id="copy-success-message" class="text-xs text-emerald-600 font-medium mt-1.5 hidden flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> คัดลอกลิงก์เรียบร้อยแล้ว! พร้อมส่งให้ผู้บริหารได้ทันที
+                    </p>
+                </div>
+
+                <!-- Security & Privileges Card -->
+                <div class="bg-indigo-50/60 rounded-xl p-4 border border-indigo-100 space-y-2 text-xs">
+                    <div class="font-bold text-indigo-900 flex items-center gap-1.5 text-xs">
+                        <i class="fa-solid fa-shield-halved text-indigo-600"></i> คุณสมบัติความปลอดภัยของลิงก์นี้:
+                    </div>
+                    <ul class="space-y-1.5 text-slate-600 pl-1">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                            <span><b>ดูข้อมูลครบถ้วน:</b> แสดงยอดเงินคงเหลือ รายรับ-จ่าย กราฟเส้นขยายใหญ่ และตัวเลขบนจุดตัดแบบ Realtime</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-xmark text-rose-500 mt-0.5"></i>
+                            <span><b>ป้องกันข้อมูล 100%:</b> ซ่อนปุ่มบันทึกยอดประจำวัน, ปุ่มแก้ไข, ปุ่มลบข้อมูล และการตั้งค่าระบบทั้งหมด</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                            <span><b>ฟังก์ชันผู้บริหาร:</b> กรองดูตามช่วงวันที่/เดือน, สลับดูรายวัน-สัปดาห์-เดือน, พิมพ์รายงาน และดาวน์โหลด CSV ได้</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Direct Preview Button -->
+                <div class="pt-2 flex items-center justify-between">
+                    <button onclick="testExecutiveLink()" class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline cursor-pointer">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> ทดลองเปิดลิงก์ผู้บริหารในแท็บใหม่
+                    </button>
+                    <button onclick="closeShareModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer">
+                        ปิดหน้าต่าง
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- Logic & Dashboard Scripts                   -->
     <!-- ========================================== -->
     <script>
@@ -660,6 +774,121 @@
             weekly: [],
             monthly: []
         };
+
+        // URL Query Params & Read-Only / Executive Mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const isReadOnly = urlParams.get('mode') === 'view' || 
+                           urlParams.get('view') === 'readonly' || 
+                           urlParams.get('readonly') === '1' ||
+                           urlParams.get('role') === 'executive' ||
+                           urlParams.get('role') === 'viewer';
+
+        // Executive Sharing Functions
+        function getExecutiveLink(forceLocal = false) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocal && !forceLocal) {
+                // Return online production URL on Vercel for sending to executives
+                return 'https://cashflowdashboard-sandy.vercel.app/?mode=view';
+            }
+            const url = new URL(window.location.origin + window.location.pathname);
+            url.searchParams.set('mode', 'view');
+            return url.toString();
+        }
+
+        function openShareModal() {
+            const linkInput = document.getElementById('share-link-input');
+            const fullLink = getExecutiveLink();
+            if (linkInput) {
+                linkInput.value = fullLink;
+            }
+            const msg = document.getElementById('copy-success-message');
+            if (msg) msg.classList.add('hidden');
+            const copyBtnText = document.getElementById('copy-share-text');
+            const copyBtnIcon = document.getElementById('copy-share-icon');
+            if (copyBtnText) copyBtnText.innerText = 'คัดลอกลิงก์';
+            if (copyBtnIcon) copyBtnIcon.className = 'fa-regular fa-copy';
+
+            const modal = document.getElementById('shareModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copyShareLink() {
+            const linkInput = document.getElementById('share-link-input');
+            if (!linkInput) return;
+
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(linkInput.value).then(() => {
+                    showCopySuccess();
+                }).catch(() => {
+                    document.execCommand('copy');
+                    showCopySuccess();
+                });
+            } else {
+                document.execCommand('copy');
+                showCopySuccess();
+            }
+        }
+
+        function showCopySuccess() {
+            const msg = document.getElementById('copy-success-message');
+            if (msg) msg.classList.remove('hidden');
+            const copyBtnText = document.getElementById('copy-share-text');
+            const copyBtnIcon = document.getElementById('copy-share-icon');
+            const copyBtn = document.getElementById('copy-share-btn');
+            if (copyBtnText) copyBtnText.innerText = 'คัดลอกแล้ว!';
+            if (copyBtnIcon) copyBtnIcon.className = 'fa-solid fa-check';
+            if (copyBtn) copyBtn.className = "inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm shadow-emerald-500/20 whitespace-nowrap cursor-pointer";
+            setTimeout(() => {
+                if (copyBtnText) copyBtnText.innerText = 'คัดลอกลิงก์';
+                if (copyBtnIcon) copyBtnIcon.className = 'fa-regular fa-copy';
+                if (copyBtn) copyBtn.className = "inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm shadow-indigo-500/20 whitespace-nowrap cursor-pointer";
+            }, 3000);
+        }
+
+        function testExecutiveLink() {
+            // If local, open local with mode=view for instant testing; if online, open online
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const testUrl = isLocal ? getExecutiveLink(true) : getExecutiveLink(false);
+            window.open(testUrl, '_blank');
+        }
+
+        function applyReadOnlyMode() {
+            if (!isReadOnly) return;
+
+            // 1. Show Executive Badge in Top Nav
+            const execBadge = document.getElementById('executive-badge');
+            if (execBadge) {
+                execBadge.classList.remove('hidden');
+                execBadge.classList.add('flex');
+            }
+
+            // 2. Show Executive Welcome Banner
+            const execBanner = document.getElementById('executive-banner');
+            if (execBanner) {
+                execBanner.classList.remove('hidden');
+            }
+
+            // 3. Hide mutation buttons in Top Nav
+            const addBtn = document.getElementById('nav-add-record-btn');
+            if (addBtn) addBtn.style.display = 'none';
+
+            const shareBtn = document.getElementById('nav-share-btn');
+            if (shareBtn) shareBtn.style.display = 'none';
+
+            const fbBtn = document.getElementById('nav-firebase-btn');
+            if (fbBtn) fbBtn.style.display = 'none';
+
+            const resetBtn = document.getElementById('nav-reset-btn');
+            if (resetBtn) resetBtn.style.display = 'none';
+        }
 
         // Firebase State
         let firebaseApp = null;
@@ -1127,6 +1356,7 @@
         }
 
         function openFirebaseModal() {
+            if (isReadOnly) return;
             const saved = localStorage.getItem('firebase_config');
             if (saved) {
                 document.getElementById('fb-config-input').value = saved;
@@ -2001,7 +2231,7 @@
                         <th class="px-4 py-3.5 text-right whitespace-nowrap text-slate-700">รับ/จ่าย สุทธิ (บาท)</th>
                         <th class="px-4 py-3.5 text-right whitespace-nowrap text-primary-800 font-bold bg-primary-50/60">เงินฝากคงเหลือสิ้นวัน (บาท)</th>
                         <th class="px-4 py-3.5 whitespace-nowrap">หมายเหตุ</th>
-                        <th class="px-4 py-3.5 text-center whitespace-nowrap no-print">จัดการ</th>
+                        ${isReadOnly ? '' : '<th class="px-4 py-3.5 text-center whitespace-nowrap no-print">จัดการ</th>'}
                     </tr>
                 `;
 
@@ -2010,6 +2240,22 @@
                     totalExpense += r.expense;
                     const netColor = r.net >= 0 ? 'text-emerald-600' : 'text-rose-600';
                     const netSign = r.net > 0 ? '+' : '';
+
+                    const actionCell = isReadOnly ? '' : `
+                        <td class="px-4 py-3.5 text-center whitespace-nowrap no-print">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="focusDay('${r.date}')" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="ซูมดูกราฟช่วงวันนี้">
+                                    <i class="fa-solid fa-crosshairs text-xs"></i>
+                                </button>
+                                <button onclick="editRecord('${r.date}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" title="แก้ไข">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                                <button onclick="deleteRecord('${r.id}', '${r.date}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="ลบ">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
@@ -2024,19 +2270,7 @@
                         <td class="px-4 py-3.5 text-right ${netColor} font-bold whitespace-nowrap">${netSign}${formatExactNumber(r.net)}</td>
                         <td class="px-4 py-3.5 text-right font-bold text-slate-900 bg-primary-50/30 whitespace-nowrap">${formatExactNumber(r.balance)}</td>
                         <td class="px-4 py-3.5 text-slate-500 text-xs max-w-xs truncate" title="${r.note}">${r.note || '-'}</td>
-                        <td class="px-4 py-3.5 text-center whitespace-nowrap no-print">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <button onclick="focusDay('${r.date}')" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="ซูมดูกราฟช่วงวันนี้">
-                                    <i class="fa-solid fa-crosshairs text-xs"></i>
-                                </button>
-                                <button onclick="editRecord('${r.date}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" title="แก้ไข">
-                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
-                                </button>
-                                <button onclick="deleteRecord('${r.id}', '${r.date}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="ลบ">
-                                    <i class="fa-solid fa-trash-can text-xs"></i>
-                                </button>
-                            </div>
-                        </td>
+                        ${actionCell}
                     `;
                     tbody.appendChild(tr);
                 });
@@ -2052,7 +2286,7 @@
                         <td class="px-4 py-4 text-right text-rose-600 font-bold">${formatExactNumber(totalExpense)}</td>
                         <td class="px-4 py-4 text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-bold">${(totalNet > 0 ? '+' : '') + formatExactNumber(totalNet)}</td>
                         <td class="px-4 py-4 text-right text-primary-700 font-extrabold bg-primary-50/50">${formatExactNumber(finalBal)}</td>
-                        <td class="px-4 py-4" colspan="2"></td>
+                        <td class="px-4 py-4" ${isReadOnly ? '' : 'colspan="2"'}></td>
                     </tr>
                 `;
 
@@ -2176,6 +2410,10 @@
 
         // Modal Controls
         function openRecordModal(date = null) {
+            if (isReadOnly) {
+                alert('โหมดสำหรับผู้บริหาร: ดูข้อมูลได้อย่างเดียว ไม่สามารถบันทึกหรือแก้ไขได้');
+                return;
+            }
             const modal = document.getElementById('recordModal');
             const titleEl = document.getElementById('modal-title');
             const form = document.getElementById('recordForm');
@@ -2241,6 +2479,10 @@
 
         async function handleFormSubmit(e) {
             e.preventDefault();
+            if (isReadOnly) {
+                alert('โหมดสำหรับผู้บริหาร: ดูข้อมูลได้อย่างเดียว ไม่สามารถบันทึกหรือแก้ไขได้');
+                return;
+            }
             const date = document.getElementById('entry-date').value;
             const income = parseFloat(document.getElementById('entry-income').value) || 0;
             const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
@@ -2288,10 +2530,15 @@
         }
 
         function editRecord(date) {
+            if (isReadOnly) return;
             openRecordModal(date);
         }
 
         async function deleteRecord(id, date) {
+            if (isReadOnly) {
+                alert('โหมดสำหรับผู้บริหาร: ดูข้อมูลได้อย่างเดียว ไม่สามารถลบข้อมูลได้');
+                return;
+            }
             if (!confirm(`คุณต้องการลบข้อมูลวันที่ ${formatThaiDateStr(date)} หรือไม่?`)) return;
 
             if (dataSource === 'firebase' && firebaseRef) {
@@ -2319,6 +2566,10 @@
         }
 
         async function resetSampleData() {
+            if (isReadOnly) {
+                alert('โหมดสำหรับผู้บริหาร: ดูข้อมูลได้อย่างเดียว');
+                return;
+            }
             if (!confirm('ต้องการรีเซ็ตข้อมูลทั้งหมดกลับเป็นชุดข้อมูลตัวอย่างเริ่มต้นหรือไม่?')) return;
 
             if (dataSource === 'firebase' && firebaseRef) {
@@ -2372,6 +2623,7 @@
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
+            applyReadOnlyMode();
             initChartSize();
             loadData();
         });
