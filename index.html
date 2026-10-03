@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบริหารจัดการกระแสเงินสด (Cash Flow Dashboard)</title>
+    
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <!-- Google Fonts: Prompt for elegant Thai typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDK (v10 compat for zero-build direct browser usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        success: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        },
+                        danger: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                        },
+                        warning: {
+                            50: '#fefce8',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Prompt', sans-serif;
+        }
+        .table-container::-webkit-scrollbar {
+            height: 7px;
+            width: 7px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.35s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25);
+        }
+
+        .toggle-btn-active {
+            font-weight: 600;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+            }
+            .shadow-sm, .shadow-md, .shadow-lg {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
+        <div class="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand Title -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary-600 text-white p-2.5 rounded-xl shadow-md shadow-primary-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-wallet text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg sm:text-xl text-slate-900 leading-tight">ระบบบริหารกระแสเงินสด</h1>
+                        <p class="text-xs text-slate-500 flex items-center gap-1.5">
+                            <span id="connection-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                SQLite เชื่อมต่อแล้ว
+                            </span>
+                            <span class="hidden sm:inline text-slate-300">|</span>
+                            <span class="hidden sm:inline">Daily, Weekly & Monthly</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons in Nav -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Firebase Settings Button -->
+                    <button onclick="openFirebaseModal()" id="nav-firebase-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 shadow-xs" title="ตั้งค่า Firebase Realtime Database">
+                        <i class="fa-solid fa-fire text-amber-500"></i>
+                        <span class="hidden sm:inline" id="nav-firebase-text">Firebase Realtime</span>
+                    </button>
+
+                    <!-- Add Record Button -->
+                    <button onclick="openRecordModal()" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3.5 py-2 rounded-lg font-medium text-sm transition-all shadow-sm shadow-primary-500/30">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>บันทึกยอดประจำวัน</span>
+                    </button>
+                    
+                    <!-- Export CSV Button -->
+                    <button onclick="exportCSV()" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200" title="ดาวน์โหลด CSV / Excel">
+                        <i class="fa-solid fa-file-csv text-base"></i>
+                    </button>
+
+                    <!-- Print Button -->
+                    <button onclick="window.print()" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200" title="พิมพ์รายงาน">
+                        <i class="fa-solid fa-print text-base"></i>
+                    </button>
+
+                    <!-- Reset Button -->
+                    <button onclick="resetSampleData()" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-slate-200" title="รีเซ็ตเป็นข้อมูลตัวอย่าง">
+                        <i class="fa-solid fa-arrow-rotate-left text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Controls & View Mode Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-2 border-b border-slate-200">
+            
+            <!-- View Mode Switcher Tabs (Daily, Weekly, Monthly) -->
+            <div class="flex items-center bg-slate-200/80 p-1 rounded-xl w-full sm:w-auto shadow-inner no-print">
+                <button onclick="switchView('daily')" id="tab-daily" class="tab-btn active flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-600 transition-all">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    <span>รายวัน (Daily)</span>
+                </button>
+                <button onclick="switchView('weekly')" id="tab-weekly" class="tab-btn flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-600 transition-all">
+                    <i class="fa-solid fa-calendar-week"></i>
+                    <span>รายสัปดาห์ (Weekly)</span>
+                </button>
+                <button onclick="switchView('monthly')" id="tab-monthly" class="tab-btn flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-600 transition-all">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>รายเดือน (Monthly)</span>
+                </button>
+            </div>
+
+            <!-- View Info & Filter Options -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-slate-600">
+                <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                    <i class="fa-regular fa-calendar-check text-primary-600 text-xs"></i>
+                    <span class="font-medium text-slate-700" id="current-range-label">กำลังโหลดข้อมูล...</span>
+                </div>
+
+                <!-- Unit Toggle (Million vs Exact Baht) -->
+                <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm no-print">
+                    <button id="unit-mb" onclick="toggleUnit('mb')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-slate-700">ล้านบาท (MB)</button>
+                    <button id="unit-baht" onclick="toggleUnit('baht')" class="px-2.5 py-1 text-xs text-slate-500 rounded hover:text-slate-800">บาท (฿)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards Grid (4 Cards) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            
+            <!-- Card 1: เงินฝากคงเหลือปัจจุบัน -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-primary-500/40 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">เงินคงเหลือล่าสุด</span>
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm shadow-sm">
+                        <i class="fa-solid fa-vault"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="kpi-balance">0.00</span>
+                    <span class="text-xs text-slate-500 font-medium" id="kpi-balance-unit">บาท</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span class="flex items-center gap-1">
+                        <i class="fa-regular fa-clock text-slate-400"></i>
+                        <span id="kpi-balance-date">-</span>
+                    </span>
+                    <span class="text-blue-600 font-medium">ณ สิ้นสุดช่วง</span>
+                </div>
+            </div>
+
+            <!-- Card 2: รวมรายรับ -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" id="kpi-income-title">รวมรายรับ</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shadow-sm">
+                        <i class="fa-solid fa-arrow-down-left text-xs"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight" id="kpi-income">0.00</span>
+                    <span class="text-xs text-slate-500 font-medium" id="kpi-income-unit">บาท</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span class="text-emerald-700 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-circle-plus text-[10px]"></i> เงินเข้า
+                    </span>
+                    <span id="kpi-avg-income" class="text-slate-500">เฉลี่ย: -</span>
+                </div>
+            </div>
+
+            <!-- Card 3: รวมรายจ่าย -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-rose-500/40 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" id="kpi-expense-title">รวมรายจ่าย</span>
+                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm shadow-sm">
+                        <i class="fa-solid fa-arrow-up-right text-xs"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight" id="kpi-expense">0.00</span>
+                    <span class="text-xs text-slate-500 font-medium" id="kpi-expense-unit">บาท</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span class="text-rose-700 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-circle-minus text-[10px]"></i> เงินออก
+                    </span>
+                    <span id="kpi-avg-expense" class="text-slate-500">เฉลี่ย: -</span>
+                </div>
+            </div>
+
+            <!-- Card 4: กระแสเงินสดสุทธิ -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-primary-500/40 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">กระแสเงินสดสุทธิ (Net)</span>
+                    <div id="kpi-net-badge-icon" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center text-sm shadow-sm">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="kpi-net">0.00</span>
+                    <span class="text-xs text-slate-500 font-medium" id="kpi-net-unit">บาท</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span id="kpi-net-status" class="font-medium">-</span>
+                    <span id="kpi-net-ratio" class="text-slate-400">อัตราส่วน -</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Line Chart (100% Full Width Primary Chart) -->
+        <div id="main-chart-card" class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 flex flex-col mb-8 transition-all">
+            
+            <!-- Chart Title Header & Fullscreen Button -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-base sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-primary-600"></i>
+                        <span id="chart-main-title">กราฟเส้นวิเคราะห์แนวโน้มกระแสเงินสด (Main Line Chart)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5" id="chart-main-subtitle">แสดงข้อมูลภาพรวมตามมุมมองที่เลือก</p>
+                </div>
+
+                <!-- Chart Size Presets & Fullscreen Button -->
+                <div class="flex items-center gap-2 no-print flex-wrap">
+                    <!-- Chart Size Switcher -->
+                    <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs shadow-xs">
+                        <button id="size-btn-huge" onclick="setChartSize('huge')" class="px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer" title="ความสูงขนาดใหญ่พิเศษ (72% ของหน้าจอ ไม่ต้องกดเต็มจอ)">
+                            <i class="fa-solid fa-arrows-up-down text-[10px] mr-1"></i> กราฟขยายใหญ่ (อัตโนมัติ)
+                        </button>
+                        <button id="size-btn-normal" onclick="setChartSize('normal')" class="px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer" title="ความสูงขนาดกะทัดรัด (520px)">
+                            <i class="fa-solid fa-compress text-[10px] mr-1"></i> มาตรฐาน
+                        </button>
+                    </div>
+
+                    <!-- Fullscreen Toggle Button -->
+                    <button onclick="toggleChartFullscreen()" id="fullscreen-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer" title="ขยายกราฟแสดงผลเต็มจอแท้จริง">
+                        <i id="fullscreen-icon" class="fa-solid fa-expand text-primary-600"></i>
+                        <span id="fullscreen-text">เต็มจอ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Chart Controls Bar -->
+            <div class="mb-5 bg-slate-50/90 rounded-xl p-3 border border-slate-200/90 space-y-3 no-print">
+                
+                <!-- Row 1: Datasets Toggle & Chart Type -->
+                <div class="flex flex-wrap items-center justify-between gap-2.5">
+                    
+                    <!-- Toggle Series to Display -->
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                            <i class="fa-solid fa-sliders text-primary-600 text-xs"></i> เลือกแสดงในกราฟ:
+                        </span>
+
+                        <!-- Income Button -->
+                        <button id="toggle-income-btn" onclick="toggleDataset('income')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
+                            <i id="toggle-income-icon" class="fa-solid fa-check text-[10px]"></i>
+                            <span>รายรับ</span>
+                        </button>
+
+                        <!-- Expense Button -->
+                        <button id="toggle-expense-btn" onclick="toggleDataset('expense')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-rose-100 text-rose-800 border border-rose-300 shadow-sm">
+                            <i id="toggle-expense-icon" class="fa-solid fa-check text-[10px]"></i>
+                            <span>รายจ่าย</span>
+                        </button>
+
+                        <!-- Balance Button -->
+                        <button id="toggle-balance-btn" onclick="toggleDataset('balance')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-blue-100 text-blue-800 border border-blue-300 shadow-sm">
+                            <i id="toggle-balance-icon" class="fa-solid fa-check text-[10px]"></i>
+                            <span>เงินฝากคงเหลือ</span>
+                        </button>
+
+                        <!-- Net Cash Flow Button -->
+                        <button id="toggle-net-btn" onclick="toggleDataset('net')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-500 border border-slate-200">
+                            <i id="toggle-net-icon" class="fa-solid fa-plus text-[10px]"></i>
+                            <span>สุทธิ (Net)</span>
+                        </button>
+
+                        <!-- Data Labels on Points Toggle Button -->
+                        <div class="h-4 w-px bg-slate-300 mx-0.5 hidden sm:block"></div>
+                        <button id="toggle-datalabels-btn" onclick="toggleDataLabels()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-sm" title="เปิด/ปิดการแสดงตัวเลขกำกับบนจุดกราฟ">
+                            <i id="toggle-datalabels-icon" class="fa-solid fa-tag text-[10px]"></i>
+                            <span>ตัวเลขบนจุดกราฟ</span>
+                        </button>
+                    </div>
+
+                    <!-- Chart Type Selection -->
+                    <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs shadow-xs">
+                        <button id="chart-type-line" onclick="setChartType('line')" class="px-2.5 py-1 rounded font-semibold text-white bg-primary-600 shadow-xs" title="กราฟเส้นทุกตัว (แนะนำ)">
+                            <i class="fa-solid fa-chart-line mr-1 text-white"></i> กราฟเส้น (หลัก)
+                        </button>
+                        <button id="chart-type-combo" onclick="setChartType('combo')" class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800" title="กราฟผสม แท่งรายรับ-จ่าย + เส้นเงินฝาก">
+                            <i class="fa-solid fa-chart-column mr-1 text-slate-500"></i> ผสม
+                        </button>
+                        <button id="chart-type-bar" onclick="setChartType('bar')" class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800" title="กราฟแท่ง">
+                            <i class="fa-solid fa-chart-simple mr-1 text-slate-500"></i> แท่งล้วน
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Row 2: Daily Range Filter (Shows only when in Daily mode) -->
+                <div id="daily-filter-container" class="pt-2.5 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                    
+                    <!-- Quick Presets -->
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                            <i class="fa-solid fa-calendar-days text-slate-400"></i> กรองช่วงวัน:
+                        </span>
+                        <button id="filter-btn-7" onclick="setDailyRange('last7')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs">7 วันล่าสุด</button>
+                        <button id="filter-btn-14" onclick="setDailyRange('last14')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs">14 วันล่าสุด</button>
+                        <button id="filter-btn-30" onclick="setDailyRange('last30')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs">30 วันล่าสุด</button>
+                        <button id="filter-btn-all" onclick="setDailyRange('all')" class="px-2.5 py-1 rounded-md bg-primary-600 text-white font-semibold shadow-xs transition-all">ทั้งหมด</button>
+                    </div>
+
+                    <!-- Month & Custom Range -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <!-- Month Dropdown -->
+                        <select id="daily-month-select" onchange="handleMonthFilterChange()" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium">
+                            <option value="">-- กรองรายเดือน --</option>
+                        </select>
+
+                        <!-- Custom Date Range -->
+                        <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 shadow-xs">
+                            <input type="date" id="custom-start-date" class="text-[11px] text-slate-700 focus:outline-none border-0 p-0.5">
+                            <span class="text-slate-400">-</span>
+                            <input type="date" id="custom-end-date" class="text-[11px] text-slate-700 focus:outline-none border-0 p-0.5">
+                            <button onclick="applyCustomDateFilter()" class="ml-1 px-2 py-0.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded text-[11px] font-semibold" title="ค้นหาตามช่วงวันที่">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+
+                        <button onclick="resetDateFilter()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-200 transition-colors" title="ล้างตัวกรอง">
+                            <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Canvas container with expanded full-width & full-height space (72vh default) -->
+            <div id="chart-canvas-container" class="relative h-[72vh] min-h-[620px] max-h-[880px] w-full flex-1 transition-all duration-200">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Table Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <!-- Table Header Bar -->
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-table-list text-primary-600"></i>
+                    <h2 class="text-base font-bold text-slate-800" id="table-title">รายละเอียดข้อมูลรายวัน</h2>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold" id="table-count-badge">0 รายการ</span>
+                </div>
+                
+                <div class="flex items-center gap-2 no-print">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="table-search" oninput="filterTable()" placeholder="ค้นหาวันที่/หมายเหตุ..." class="pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 w-48 sm:w-56 transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Responsive Wrapper -->
+            <div class="table-container overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse text-sm min-w-[760px]">
+                    <thead id="table-head" class="bg-slate-50 text-slate-500 text-xs border-b border-slate-200 uppercase tracking-wider font-semibold">
+                        <!-- Head injected dynamically based on View Mode -->
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-100">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                    <tfoot id="table-foot" class="bg-slate-50/80 border-t-2 border-slate-200 font-bold text-slate-800">
+                        <!-- Foot injected via JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 no-print">
+        ระบบบริหารจัดการกระแสเงินสด &copy; 2026 Cash Flow Dashboard V2 &bull; Daily, Weekly & Monthly Analytics
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- Modal: บันทึก / แก้ไขยอดประจำวัน (Daily Entry) -->
+    <!-- ========================================== -->
+    <div id="recordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden no-print transition-all">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-base" id="modal-title">บันทึกยอดประจำวัน</h3>
+                </div>
+                <button onclick="closeRecordModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="recordForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="entry-id" value="">
+
+                <!-- วันที่ -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่ (Date) <span class="text-rose-500">*</span></label>
+                    <div class="flex gap-2">
+                        <input type="date" id="entry-date" required onchange="calculateClosingBalance()" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium">
+                        <button type="button" onclick="setTodayDate()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">วันนี้</button>
+                    </div>
+                </div>
+
+                <!-- ยอดยกมาคงเหลือ (Beginning Balance) -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
+                    <span class="text-slate-600 flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-wallet text-primary-600"></i> ยอดยกมาคงเหลือ:
+                    </span>
+                    <span id="entry-prev-balance-display" class="font-bold text-slate-800 text-sm">฿0.00</span>
+                </div>
+
+                <!-- รายรับ & รายจ่าย -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-emerald-700 mb-1">รายรับประจำวัน (บาท) <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
+                            <input type="number" step="0.01" min="0" id="entry-income" required placeholder="0.00" oninput="calculateClosingBalance()" class="w-full pl-7 pr-3 py-2 border border-emerald-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-emerald-700 font-semibold">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-rose-700 mb-1">รายจ่ายประจำวัน (บาท) <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
+                            <input type="number" step="0.01" min="0" id="entry-expense" required placeholder="0.00" oninput="calculateClosingBalance()" class="w-full pl-7 pr-3 py-2 border border-rose-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 text-rose-700 font-semibold">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- เงินคงเหลือสิ้นวัน -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-semibold text-slate-700">เงินฝากคงเหลือสิ้นวัน (บาท) <span class="text-rose-500">*</span></label>
+                        <span class="text-[11px] text-slate-400">(คำนวณอัตโนมัติ หรือแก้ไขได้)</span>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
+                        <input type="number" step="0.01" id="entry-balance" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900 font-bold">
+                    </div>
+                </div>
+
+                <!-- หมายเหตุ / รายละเอียด -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">หมายเหตุ / รายการสำคัญ</label>
+                    <textarea id="entry-note" rows="2" placeholder="เช่น ค่าจ้างงวดแรก, ยอดขายแคมเปญ, ชำระหนี้การค้า..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeRecordModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-lg text-sm font-semibold transition-all shadow-sm">
+                        <i class="fa-solid fa-check mr-1.5"></i> บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Modal: ตั้งค่า Firebase Realtime Database   -->
+    <!-- ========================================== -->
+    <div id="firebaseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden no-print transition-all">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-xl mx-4 overflow-hidden transform transition-all max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-amber-50/70">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm font-bold shadow-xs">
+                        <i class="fa-solid fa-fire text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">เชื่อมต่อ Firebase Realtime Database</h3>
+                        <p class="text-xs text-slate-500">ซิงก์ข้อมูลกระแสเงินสดผ่าน Cloud แบบเรียลไทม์ 24 ชม.</p>
+                    </div>
+                </div>
+                <button onclick="closeFirebaseModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-5 text-sm">
+                
+                <!-- Current Connection Status Card -->
+                <div id="fb-status-card" class="p-3.5 rounded-xl border flex items-center justify-between bg-slate-50 border-slate-200">
+                    <div class="flex items-center gap-2.5">
+                        <span id="fb-status-dot" class="w-3 h-3 rounded-full bg-slate-400"></span>
+                        <div>
+                            <span class="font-semibold text-xs text-slate-800" id="fb-status-title">ยังไม่ได้เชื่อมต่อ Firebase</span>
+                            <p class="text-[11px] text-slate-500" id="fb-status-desc">ระบบกำลังใช้งานฐานข้อมูล SQLite ในเครื่อง</p>
+                        </div>
+                    </div>
+                    <button id="fb-disconnect-btn" onclick="disconnectFirebase()" class="hidden px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg font-semibold transition-colors">
+                        ตัดการเชื่อมต่อ
+                    </button>
+                </div>
+
+                <!-- Config Input Section -->
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold text-slate-700">
+                        วาง Firebase Config JSON <span class="text-amber-600 font-normal">(ก๊อปปี้จาก Firebase Console > Project Settings)</span>:
+                    </label>
+                    <textarea id="fb-config-input" rows="5" placeholder='{\n  "apiKey": "AIzaSy...",\n  "databaseURL": "https://your-project-rtdb.firebaseio.com",\n  "projectId": "your-project"\n}' class="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"></textarea>
+                    
+                    <div class="flex items-center gap-2">
+                        <button onclick="saveAndConnectFirebase()" class="flex-1 py-2 px-4 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-semibold text-xs rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>บันทึกและเชื่อมต่อ Firebase</span>
+                        </button>
+                        <button onclick="uploadCurrentDataToFirebase()" id="fb-upload-btn" class="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5" title="อัปโหลดชุดข้อมูลปัจจุบันขึ้นไปเก็บใน Firebase">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>ซิงก์ข้อมูลขึ้น Cloud</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step-by-Step Guide Accordion -->
+                <div class="pt-4 border-t border-slate-200 space-y-2">
+                    <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-blue-500"></i>
+                        ขั้นตอนการตั้งค่า Firebase Realtime Database (ทำครั้งเดียว):
+                    </span>
+                    <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1.5 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <li>ไปที่ <a href="https://console.firebase.google.com" target="_blank" class="text-primary-600 underline font-semibold">Firebase Console</a> และกด <b>"Add project"</b> (สร้างโปรเจกต์ฟรี)</li>
+                        <li>ในเมนูด้านซ้าย เลือก <b>Build > Realtime Database</b> แล้วกด <b>"Create Database"</b></li>
+                        <li>เลือก Location (แนะนำ <code>Singapore (asia-southeast1)</code>)</li>
+                        <li>เลือกโหมดเริ่มต้นเป็น <b>"Start in test mode"</b> หรือไปที่แท็บ <b>Rules</b> ตั้งเป็น:
+                            <pre class="bg-slate-800 text-emerald-400 p-2 rounded text-[11px] mt-1 font-mono">{ "rules": { ".read": true, ".write": true } }</pre>
+                        </li>
+                        <li>ไปที่รูปเฟือง <b>Project settings > General</b> เลื่อนลงมาที่ "Your apps" เลือก Web (<code>&lt;/&gt;</code>) แล้วคัดลอกส่วน <code>firebaseConfig</code> มาวางในช่องด้านบนได้เลย!</li>
+                    </ol>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+                <button onclick="closeFirebaseModal()" class="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Logic & Dashboard Scripts                   -->
+    <!-- ========================================== -->
+    <script>
+        // State variables
+        let currentMode = 'daily'; // 'daily' | 'weekly' | 'monthly'
+        let currentUnit = 'mb';    // 'mb' (ล้านบาท) | 'baht' (บาท)
+        let dataSource = 'local';  // 'firebase' | 'sqlite' | 'local'
+        let mainChart = null;
+        let ratioChart = null;
+        let rawRecords = [];       // daily records array
+        let summaryData = {
+            kpis: {},
+            daily: [],
+            weekly: [],
+            monthly: []
+        };
+
+        // Firebase State
+        let firebaseApp = null;
+        let firebaseDb = null;
+        let firebaseRef = null;
+        let isFirebaseConnected = false;
+
+        // Chart Interactive Display Config
+        let chartConfig = {
+            showIncome: true,
+            showExpense: true,
+            showBalance: true,
+            showNet: false,
+            showDataLabels: true, // แสดงตัวเลขบนจุดตัดกราฟ
+            chartType: 'line',  // 'line' (หลัก) | 'combo' | 'bar'
+            dailyRange: 'all',  // 'all' | 'last7' | 'last14' | 'last30' | 'month' | 'custom'
+            selectedMonth: '',
+            customStart: '',
+            customEnd: ''
+        };
+
+        // Register ChartDataLabels plugin if available and set default to false
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            try {
+                Chart.register(ChartDataLabels);
+                if (Chart.defaults && Chart.defaults.plugins) {
+                    Chart.defaults.plugins.datalabels = { display: false };
+                }
+            } catch (e) {
+                console.warn('ChartDataLabels registration notice:', e);
+            }
+        }
+
+        // Thai Month Names
+        const THAI_MONTHS_SHORT = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        const THAI_MONTHS_FULL = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        // Currency Formatter
+        function formatMoney(amount, forceBaht = false) {
+            if (amount === undefined || amount === null || isNaN(amount)) return '0.00';
+            
+            if (!forceBaht && currentUnit === 'mb') {
+                const inMB = amount / 1000000;
+                return new Intl.NumberFormat('th-TH', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                }).format(inMB) + ' ล้าน';
+            }
+            
+            return new Intl.NumberFormat('th-TH', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            }).format(amount) + ' ฿';
+        }
+
+        function formatExactNumber(amount) {
+            return new Intl.NumberFormat('th-TH', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            }).format(amount);
+        }
+
+        // Format Date to Thai
+        function formatThaiDateStr(dateStr) {
+            if (!dateStr) return '-';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                const day = parseInt(parts[2], 10);
+                const month = parseInt(parts[1], 10);
+                const year = parseInt(parts[0], 10) + 543;
+                return `${day} ${THAI_MONTHS_SHORT[month]} ${String(year).slice(-2)}`;
+            }
+            return dateStr;
+        }
+
+        // ISO Week Helper
+        function getIsoWeek(d) {
+            const date = new Date(d.getTime());
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            const week1 = new Date(date.getFullYear(), 0, 4);
+            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        }
+
+        // Sample Data Seed (Fallback if offline or DB reset)
+        function getDefaultSampleRecords() {
+            return [
+                { date: '2026-09-28', prevBalance: 32426016.95, income: 976432.22, expense: 2782844.00, balance: 30619605.17, note: 'ยอดยกมา 32,426,016.95' },
+                { date: '2026-09-29', prevBalance: 30619605.17, income: 486812.00, expense: 6233282.00, balance: 24873135.17, note: '' },
+                { date: '2026-09-30', prevBalance: 24873135.17, income: 557220.00, expense: 2064725.35, balance: 23365629.82, note: '' },
+                { date: '2026-10-01', prevBalance: 23365629.82, income: 627952.00, expense: 1619600.00, balance: 22373981.82, note: '' },
+                { date: '2026-10-02', prevBalance: 22373981.82, income: 1650931.40, expense: 669080.00, balance: 23355833.22, note: '' }
+            ];
+        }
+
+        // Local Aggregation Engine (for LocalStorage, Firebase, or instant responsiveness)
+        function computeAggregationsLocally(records) {
+            records.sort((a, b) => a.date.localeCompare(b.date));
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            const daily = records.map((r, index) => {
+                const inc = parseFloat(r.income) || 0;
+                const exp = parseFloat(r.expense) || 0;
+                const bal = parseFloat(r.balance) || 0;
+                const net = inc - exp;
+                totalIncome += inc;
+                totalExpense += exp;
+
+                let prevBal = 0;
+                if (r.prevBalance !== undefined && r.prevBalance !== null && !isNaN(r.prevBalance) && r.prevBalance !== '') {
+                    prevBal = parseFloat(r.prevBalance);
+                } else if (index === 0) {
+                    prevBal = bal - inc + exp;
+                } else {
+                    prevBal = parseFloat(records[index - 1].balance) || 0;
+                }
+
+                const dt = new Date(r.date + 'T00:00:00');
+                const thaiYear = dt.getFullYear() + 543;
+
+                return {
+                    id: r.id || index + 1,
+                    date: r.date,
+                    displayDate: `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${thaiYear}`,
+                    label: `${dt.getDate()} ${THAI_MONTHS_SHORT[dt.getMonth() + 1]}`,
+                    prevBalance: prevBal,
+                    income: inc,
+                    expense: exp,
+                    net: net,
+                    balance: bal,
+                    note: r.note || ''
+                };
+            });
+
+            // Weekly Grouping
+            const weeksMap = {};
+            daily.forEach(d => {
+                const dt = new Date(d.date + 'T00:00:00');
+                const weekNum = getIsoWeek(dt);
+                const year = dt.getFullYear();
+                const key = `${year}-W${String(weekNum).padStart(2, '0')}`;
+
+                if (!weeksMap[key]) {
+                    weeksMap[key] = {
+                        weekNumber: weekNum,
+                        startDate: d.date,
+                        endDate: d.date,
+                        income: 0,
+                        expense: 0,
+                        daysCount: 0,
+                        balance: d.balance
+                    };
+                }
+                weeksMap[key].endDate = d.date;
+                weeksMap[key].income += d.income;
+                weeksMap[key].expense += d.expense;
+                weeksMap[key].daysCount += 1;
+                weeksMap[key].balance = d.balance;
+            });
+
+            const weekly = Object.keys(weeksMap).sort().map(k => {
+                const w = weeksMap[k];
+                const net = w.income - w.expense;
+                return {
+                    weekKey: k,
+                    weekNumber: w.weekNumber,
+                    label: `สัปดาห์ที่ ${w.weekNumber}`,
+                    dateRange: `${formatThaiDateStr(w.startDate)} - ${formatThaiDateStr(w.endDate)}`,
+                    startDate: w.startDate,
+                    endDate: w.endDate,
+                    income: w.income,
+                    expense: w.expense,
+                    net: net,
+                    balance: w.balance,
+                    daysCount: w.daysCount
+                };
+            });
+
+            // Monthly Grouping
+            const monthsMap = {};
+            daily.forEach(d => {
+                const dt = new Date(d.date + 'T00:00:00');
+                const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+
+                if (!monthsMap[key]) {
+                    monthsMap[key] = {
+                        year: dt.getFullYear(),
+                        month: dt.getMonth() + 1,
+                        income: 0,
+                        expense: 0,
+                        daysCount: 0,
+                        balance: d.balance
+                    };
+                }
+                monthsMap[key].income += d.income;
+                monthsMap[key].expense += d.expense;
+                monthsMap[key].daysCount += 1;
+                monthsMap[key].balance = d.balance;
+            });
+
+            const monthly = Object.keys(monthsMap).sort().map(k => {
+                const m = monthsMap[k];
+                const net = m.income - m.expense;
+                const thaiYear = m.year + 543;
+                return {
+                    monthKey: k,
+                    year: m.year,
+                    month: m.month,
+                    label: `${THAI_MONTHS_SHORT[m.month]} ${String(thaiYear).slice(-2)}`,
+                    fullLabel: `${THAI_MONTHS_FULL[m.month]} ${thaiYear}`,
+                    income: m.income,
+                    expense: m.expense,
+                    net: net,
+                    balance: m.balance,
+                    daysCount: m.daysCount
+                };
+            });
+
+            const latestBalance = daily.length > 0 ? daily[daily.length - 1].balance : 0;
+            const netCashFlow = totalIncome - totalExpense;
+            const daysCount = daily.length;
+
+            return {
+                kpis: {
+                    currentBalance: latestBalance,
+                    totalIncome: totalIncome,
+                    totalExpense: totalExpense,
+                    netCashFlow: netCashFlow,
+                    daysCount: daysCount,
+                    avgDailyIncome: daysCount ? totalIncome / daysCount : 0,
+                    avgDailyExpense: daysCount ? totalExpense / daysCount : 0
+                },
+                daily,
+                weekly,
+                monthly
+            };
+        }
+
+        // Filter daily items based on dailyRange setting
+        function getFilteredDailyList(fullDailyList) {
+            if (!fullDailyList || fullDailyList.length === 0) return [];
+            let list = [...fullDailyList];
+
+            if (chartConfig.dailyRange === 'last7') {
+                return list.slice(-7);
+            } else if (chartConfig.dailyRange === 'last14') {
+                return list.slice(-14);
+            } else if (chartConfig.dailyRange === 'last30') {
+                return list.slice(-30);
+            } else if (chartConfig.dailyRange === 'month' && chartConfig.selectedMonth) {
+                return list.filter(r => r.date.startsWith(chartConfig.selectedMonth));
+            } else if (chartConfig.dailyRange === 'custom') {
+                if (chartConfig.customStart && chartConfig.customEnd) {
+                    return list.filter(r => r.date >= chartConfig.customStart && r.date <= chartConfig.customEnd);
+                } else if (chartConfig.customStart) {
+                    return list.filter(r => r.date >= chartConfig.customStart);
+                } else if (chartConfig.customEnd) {
+                    return list.filter(r => r.date <= chartConfig.customEnd);
+                }
+            }
+            return list;
+        }
+
+        function getCurrentActiveItems() {
+            if (currentMode === 'daily') {
+                return getFilteredDailyList(summaryData.daily || []);
+            } else if (currentMode === 'weekly') {
+                return summaryData.weekly || [];
+            } else if (currentMode === 'monthly') {
+                return summaryData.monthly || [];
+            }
+            return [];
+        }
+
+        // Default Project Firebase Configuration
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBcu9GX9G_vHBCdfsAYC7O-jLhauHk7tRE",
+            authDomain: "cash-flow-dashboard-v2.firebaseapp.com",
+            databaseURL: "https://cash-flow-dashboard-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cash-flow-dashboard-v2",
+            storageBucket: "cash-flow-dashboard-v2.firebasestorage.app",
+            messagingSenderId: "306048084585",
+            appId: "1:306048084585:web:6a6a45e501d4eb417f50f8",
+            measurementId: "G-7MTJ692L7R"
+        };
+
+        // ==========================================
+        // Firebase Realtime Database Integration
+        // ==========================================
+        function initFirebaseFromStorage() {
+            const savedConfigStr = localStorage.getItem('firebase_config');
+            let cfg = null;
+            if (savedConfigStr) {
+                try {
+                    cfg = JSON.parse(savedConfigStr);
+                } catch (e) {
+                    console.error('Invalid saved firebase config', e);
+                }
+            }
+            if (!cfg) {
+                cfg = DEFAULT_FIREBASE_CONFIG;
+            }
+
+            if (cfg && (cfg.databaseURL || cfg.projectId)) {
+                connectToFirebase(cfg);
+                return true;
+            }
+            return false;
+        }
+
+        function connectToFirebase(config) {
+            try {
+                if (!firebase.apps.length) {
+                    firebaseApp = firebase.initializeApp(config);
+                } else {
+                    firebaseApp = firebase.app();
+                }
+                firebaseDb = firebase.database();
+                firebaseRef = firebaseDb.ref('cash_flow_records');
+
+                // Attach Real-time listener
+                firebaseRef.on('value', (snapshot) => {
+                    const val = snapshot.val();
+                    if (val) {
+                        const records = Object.keys(val).map(k => ({
+                            id: k,
+                            ...val[k]
+                        }));
+                        rawRecords = records;
+                        summaryData = computeAggregationsLocally(records);
+                    } else {
+                        // Empty database on Firebase
+                        rawRecords = [];
+                        summaryData = computeAggregationsLocally([]);
+                    }
+
+                    dataSource = 'firebase';
+                    isFirebaseConnected = true;
+                    updateConnectionBadge();
+                    updateFirebaseModalStatus(true, config);
+                    populateMonthDropdown();
+                    renderDashboard();
+                }, (error) => {
+                    console.error('Firebase read failed:', error);
+                    alert('ไม่สามารถอ่านข้อมูลจาก Firebase: ' + error.message);
+                });
+
+                localStorage.setItem('firebase_config', JSON.stringify(config));
+                return true;
+            } catch (err) {
+                console.error('Firebase init error:', err);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase: ' + err.message);
+                return false;
+            }
+        }
+
+        function saveAndConnectFirebase() {
+            const inputVal = document.getElementById('fb-config-input').value.trim();
+            if (!inputVal) {
+                alert('กรุณาวาง Firebase Config JSON ก่อนครับ');
+                return;
+            }
+
+            try {
+                // If user pasted "const firebaseConfig = { ... };" or raw JSON
+                let cleanJson = inputVal;
+                if (cleanJson.includes('=')) {
+                    cleanJson = cleanJson.substring(cleanJson.indexOf('=') + 1).trim();
+                }
+                if (cleanJson.endsWith(';')) {
+                    cleanJson = cleanJson.slice(0, -1).trim();
+                }
+
+                const config = JSON.parse(cleanJson);
+                if (!config.databaseURL) {
+                    // Try to guess RTDB URL if only projectId given
+                    if (config.projectId) {
+                        config.databaseURL = `https://${config.projectId}-default-rtdb.firebaseio.com`;
+                    } else {
+                        throw new Error('ไม่พบ databaseURL ใน Config');
+                    }
+                }
+
+                const ok = connectToFirebase(config);
+                if (ok) {
+                    alert('เชื่อมต่อ Firebase Realtime Database สำเร็จ! ระบบจะซิงก์ข้อมูลแบบเรียลไทม์');
+                    closeFirebaseModal();
+                }
+            } catch (e) {
+                alert('รูปแบบ Firebase Config ไม่ถูกต้อง กรุณาตรวจสอบ JSON: ' + e.message);
+            }
+        }
+
+        async function uploadCurrentDataToFirebase() {
+            if (!isFirebaseConnected || !firebaseRef) {
+                alert('กรุณาเชื่อมต่อ Firebase ให้สำเร็จก่อนอัปโหลดข้อมูลครับ');
+                return;
+            }
+
+            if (!confirm('ต้องการนำข้อมูลปัจจุบัน (ทั้ง 37 รายการ) อัปโหลดขึ้นสู่ Firebase Realtime Database หรือไม่?')) return;
+
+            // Gather records to upload
+            const recordsToUpload = (rawRecords && rawRecords.length > 0) ? rawRecords : getDefaultSampleRecords();
+            const updates = {};
+            recordsToUpload.forEach(r => {
+                updates[r.date] = {
+                    date: r.date,
+                    income: parseFloat(r.income) || 0,
+                    expense: parseFloat(r.expense) || 0,
+                    balance: parseFloat(r.balance) || 0,
+                    note: r.note || '',
+                    updatedAt: new Date().toISOString()
+                };
+            });
+
+            try {
+                await firebaseRef.update(updates);
+                alert(`อัปโหลดข้อมูลสำเร็จ ${recordsToUpload.length} รายการขึ้นสู่ Firebase เรียบร้อยแล้ว!`);
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการอัปโหลด: ' + err.message);
+            }
+        }
+
+        function disconnectFirebase() {
+            if (!confirm('ต้องการตัดการเชื่อมต่อกับ Firebase และกลับไปใช้ SQLite ในเครื่องหรือไม่?')) return;
+
+            if (firebaseRef) {
+                firebaseRef.off();
+            }
+            localStorage.removeItem('firebase_config');
+            isFirebaseConnected = false;
+            dataSource = 'sqlite';
+            updateFirebaseModalStatus(false);
+            loadData(); // Re-fetch from SQLite or local
+            alert('ตัดการเชื่อมต่อ Firebase เรียบร้อยแล้ว สลับกลับมาใช้ฐานข้อมูลในเครื่อง');
+        }
+
+        function updateFirebaseModalStatus(connected, config = null) {
+            const card = document.getElementById('fb-status-card');
+            const dot = document.getElementById('fb-status-dot');
+            const title = document.getElementById('fb-status-title');
+            const desc = document.getElementById('fb-status-desc');
+            const disBtn = document.getElementById('fb-disconnect-btn');
+            const navBtnText = document.getElementById('nav-firebase-text');
+
+            if (connected) {
+                card.className = "p-3.5 rounded-xl border flex items-center justify-between bg-emerald-50 border-emerald-200";
+                dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+                title.innerText = "กำลังเชื่อมต่อ Firebase Realtime Cloud";
+                title.className = "font-bold text-xs text-emerald-800";
+                desc.innerText = config && config.databaseURL ? config.databaseURL : "ซิงก์ข้อมูลสด Realtime สำเร็จ";
+                disBtn.classList.remove('hidden');
+                navBtnText.innerText = "🔥 Firebase (Online)";
+            } else {
+                card.className = "p-3.5 rounded-xl border flex items-center justify-between bg-slate-50 border-slate-200";
+                dot.className = "w-3 h-3 rounded-full bg-slate-400";
+                title.innerText = "ยังไม่ได้เชื่อมต่อ Firebase";
+                title.className = "font-semibold text-xs text-slate-800";
+                desc.innerText = "ระบบกำลังใช้งานฐานข้อมูล SQLite ในเครื่อง";
+                disBtn.classList.add('hidden');
+                navBtnText.innerText = "Firebase Realtime";
+            }
+        }
+
+        function openFirebaseModal() {
+            const saved = localStorage.getItem('firebase_config');
+            if (saved) {
+                document.getElementById('fb-config-input').value = saved;
+            }
+            updateFirebaseModalStatus(isFirebaseConnected, saved ? JSON.parse(saved) : null);
+            document.getElementById('firebaseModal').classList.remove('hidden');
+        }
+
+        function closeFirebaseModal() {
+            document.getElementById('firebaseModal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // General Data Loader
+        // ==========================================
+        async function loadData() {
+            // 1. If Firebase is configured, prioritize Firebase
+            if (initFirebaseFromStorage()) {
+                return;
+            }
+
+            // 2. Otherwise try local SQLite Backend Server
+            try {
+                const response = await fetch('/api/summary', { cache: 'no-store' });
+                if (response.ok) {
+                    summaryData = await response.json();
+                    dataSource = 'sqlite';
+                    updateConnectionBadge();
+                } else {
+                    throw new Error('Server returned non-200');
+                }
+            } catch (err) {
+                // 3. Offline fallback to LocalStorage
+                dataSource = 'local';
+                updateConnectionBadge();
+                const localStr = localStorage.getItem('cash_flow_records');
+                if (localStr) {
+                    try {
+                        rawRecords = JSON.parse(localStr);
+                    } catch (e) {
+                        rawRecords = getDefaultSampleRecords();
+                    }
+                } else {
+                    rawRecords = getDefaultSampleRecords();
+                    localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+                }
+                summaryData = computeAggregationsLocally(rawRecords);
+            }
+
+            populateMonthDropdown();
+            renderDashboard();
+        }
+
+        function populateMonthDropdown() {
+            const selectEl = document.getElementById('daily-month-select');
+            if (!selectEl) return;
+            selectEl.innerHTML = '<option value="">-- กรองรายเดือน --</option>';
+
+            const months = summaryData.monthly || [];
+            months.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.monthKey;
+                opt.innerText = m.fullLabel || m.label;
+                if (chartConfig.selectedMonth === m.monthKey) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function updateConnectionBadge() {
+            const badge = document.getElementById('connection-badge');
+            if (dataSource === 'firebase') {
+                badge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> 🔥 Firebase Realtime`;
+            } else if (dataSource === 'sqlite') {
+                badge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SQLite เชื่อมต่อแล้ว`;
+            } else {
+                badge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> LocalStorage (ออฟไลน์)`;
+            }
+        }
+
+        // View Mode Switcher
+        function switchView(mode) {
+            currentMode = mode;
+            ['daily', 'weekly', 'monthly'].forEach(m => {
+                const el = document.getElementById(`tab-${m}`);
+                if (m === mode) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+
+            // Show or hide daily filter controls
+            const dailyFilterBar = document.getElementById('daily-filter-container');
+            if (dailyFilterBar) {
+                if (mode === 'daily') {
+                    dailyFilterBar.style.display = 'flex';
+                } else {
+                    dailyFilterBar.style.display = 'none';
+                }
+            }
+
+            renderDashboard();
+        }
+
+        // Unit Switcher
+        function toggleUnit(unit) {
+            currentUnit = unit;
+            const btnMb = document.getElementById('unit-mb');
+            const btnBaht = document.getElementById('unit-baht');
+            if (unit === 'mb') {
+                btnMb.className = "px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-slate-700";
+                btnBaht.className = "px-2.5 py-1 text-xs text-slate-500 rounded hover:text-slate-800";
+            } else {
+                btnBaht.className = "px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-slate-700";
+                btnMb.className = "px-2.5 py-1 text-xs text-slate-500 rounded hover:text-slate-800";
+            }
+            renderDashboard();
+        }
+
+        // ==========================================
+        // Chart Interactive Controls
+        // ==========================================
+        function toggleDataset(type) {
+            if (type === 'income') chartConfig.showIncome = !chartConfig.showIncome;
+            if (type === 'expense') chartConfig.showExpense = !chartConfig.showExpense;
+            if (type === 'balance') chartConfig.showBalance = !chartConfig.showBalance;
+            if (type === 'net') chartConfig.showNet = !chartConfig.showNet;
+
+            if (!chartConfig.showIncome && !chartConfig.showExpense && !chartConfig.showBalance && !chartConfig.showNet) {
+                chartConfig[type === 'income' ? 'showIncome' : 'showBalance'] = true;
+            }
+
+            updateDatasetButtonStyles();
+            updateCharts(getCurrentActiveItems());
+        }
+
+        function updateDatasetButtonStyles() {
+            // Income
+            const btnInc = document.getElementById('toggle-income-btn');
+            const iconInc = document.getElementById('toggle-income-icon');
+            if (chartConfig.showIncome) {
+                btnInc.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm";
+                iconInc.className = "fa-solid fa-check text-[10px]";
+            } else {
+                btnInc.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60";
+                iconInc.className = "fa-solid fa-plus text-[10px]";
+            }
+
+            // Expense
+            const btnExp = document.getElementById('toggle-expense-btn');
+            const iconExp = document.getElementById('toggle-expense-icon');
+            if (chartConfig.showExpense) {
+                btnExp.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-rose-100 text-rose-800 border border-rose-300 shadow-sm";
+                iconExp.className = "fa-solid fa-check text-[10px]";
+            } else {
+                btnExp.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60";
+                iconExp.className = "fa-solid fa-plus text-[10px]";
+            }
+
+            // Balance
+            const btnBal = document.getElementById('toggle-balance-btn');
+            const iconBal = document.getElementById('toggle-balance-icon');
+            if (chartConfig.showBalance) {
+                btnBal.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-blue-100 text-blue-800 border border-blue-300 shadow-sm";
+                iconBal.className = "fa-solid fa-check text-[10px]";
+            } else {
+                btnBal.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60";
+                iconBal.className = "fa-solid fa-plus text-[10px]";
+            }
+
+            // Net
+            const btnNet = document.getElementById('toggle-net-btn');
+            const iconNet = document.getElementById('toggle-net-icon');
+            if (chartConfig.showNet) {
+                btnNet.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-purple-100 text-purple-800 border border-purple-300 shadow-sm";
+                iconNet.className = "fa-solid fa-check text-[10px]";
+            } else {
+                btnNet.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60";
+                iconNet.className = "fa-solid fa-plus text-[10px]";
+            }
+
+            updateDataLabelsButtonStyle();
+        }
+
+        function toggleDataLabels() {
+            chartConfig.showDataLabels = !chartConfig.showDataLabels;
+            updateDataLabelsButtonStyle();
+            updateCharts(getCurrentActiveItems());
+        }
+
+        function updateDataLabelsButtonStyle() {
+            const btn = document.getElementById('toggle-datalabels-btn');
+            const icon = document.getElementById('toggle-datalabels-icon');
+            if (!btn) return;
+            if (chartConfig.showDataLabels) {
+                btn.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-sm";
+                if (icon) icon.className = "fa-solid fa-tag text-[10px]";
+            } else {
+                btn.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60";
+                if (icon) icon.className = "fa-solid fa-tag text-[10px]";
+            }
+        }
+
+        function formatDataPointLabel(value) {
+            if (value === null || value === undefined || isNaN(value)) return '';
+            const isMB = currentUnit === 'mb';
+            if (isMB) {
+                return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value) + ' ล้านบาท';
+            } else {
+                return new Intl.NumberFormat('th-TH', { maximumFractionDigits: 0 }).format(value) + ' บาท';
+            }
+        }
+
+        // Chart Height / Size Mode (huge by default: 72vh)
+        let currentChartSize = localStorage.getItem('cashflow_chart_size') || 'huge';
+
+        function initChartSize() {
+            setChartSize(currentChartSize, false);
+        }
+
+        function setChartSize(size, triggerResize = true) {
+            currentChartSize = size;
+            const container = document.getElementById('chart-canvas-container');
+            const btnHuge = document.getElementById('size-btn-huge');
+            const btnNormal = document.getElementById('size-btn-normal');
+            if (!container) return;
+
+            if (size === 'huge') {
+                container.className = "relative h-[72vh] min-h-[620px] max-h-[880px] w-full flex-1 transition-all duration-200";
+                if (btnHuge) {
+                    btnHuge.className = "px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer";
+                }
+                if (btnNormal) {
+                    btnNormal.className = "px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
+                }
+                try { localStorage.setItem('cashflow_chart_size', 'huge'); } catch(e) {}
+            } else {
+                container.className = "relative h-[520px] w-full flex-1 transition-all duration-200";
+                if (btnHuge) {
+                    btnHuge.className = "px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
+                }
+                if (btnNormal) {
+                    btnNormal.className = "px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer";
+                }
+                try { localStorage.setItem('cashflow_chart_size', 'normal'); } catch(e) {}
+            }
+
+            if (triggerResize && mainChart) {
+                setTimeout(() => mainChart.resize(), 80);
+            }
+        }
+
+        // Fullscreen Toggle for Line Chart
+        function toggleChartFullscreen() {
+            const card = document.getElementById('main-chart-card');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (card.requestFullscreen) {
+                    card.requestFullscreen();
+                } else if (card.webkitRequestFullscreen) {
+                    card.webkitRequestFullscreen();
+                } else if (card.msRequestFullscreen) {
+                    card.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            const card = document.getElementById('main-chart-card');
+            const icon = document.getElementById('fullscreen-icon');
+            const text = document.getElementById('fullscreen-text');
+            const canvasContainer = document.getElementById('chart-canvas-container');
+
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                card.classList.add('p-8', 'overflow-y-auto');
+                canvasContainer.style.height = 'calc(100vh - 190px)';
+                if (icon) icon.className = 'fa-solid fa-compress text-primary-600';
+                if (text) text.innerText = 'ย่อจอ';
+            } else {
+                card.classList.remove('p-8', 'overflow-y-auto');
+                canvasContainer.style.height = '';
+                if (icon) icon.className = 'fa-solid fa-expand text-primary-600';
+                if (text) text.innerText = 'เต็มจอ';
+                setChartSize(currentChartSize, false);
+            }
+            if (mainChart) {
+                setTimeout(() => mainChart.resize(), 100);
+            }
+        }
+
+        function setChartType(type) {
+            chartConfig.chartType = type;
+            ['combo', 'line', 'bar'].forEach(t => {
+                const btn = document.getElementById(`chart-type-${t}`);
+                if (btn) {
+                    if (t === type) {
+                        btn.className = "px-2.5 py-1 rounded font-semibold text-white bg-primary-600 shadow-xs";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded text-slate-500 hover:text-slate-800";
+                    }
+                }
+            });
+            updateCharts(getCurrentActiveItems());
+        }
+
+        function setDailyRange(range) {
+            chartConfig.dailyRange = range;
+            chartConfig.selectedMonth = '';
+            chartConfig.customStart = '';
+            chartConfig.customEnd = '';
+            const mSel = document.getElementById('daily-month-select');
+            if (mSel) mSel.value = '';
+            const cStart = document.getElementById('custom-start-date');
+            if (cStart) cStart.value = '';
+            const cEnd = document.getElementById('custom-end-date');
+            if (cEnd) cEnd.value = '';
+
+            updateDailyRangeButtonStyles();
+            renderDashboard();
+        }
+
+        function handleMonthFilterChange() {
+            const sel = document.getElementById('daily-month-select').value;
+            if (sel) {
+                chartConfig.dailyRange = 'month';
+                chartConfig.selectedMonth = sel;
+            } else {
+                chartConfig.dailyRange = 'all';
+                chartConfig.selectedMonth = '';
+            }
+            updateDailyRangeButtonStyles();
+            renderDashboard();
+        }
+
+        function applyCustomDateFilter() {
+            const start = document.getElementById('custom-start-date').value;
+            const end = document.getElementById('custom-end-date').value;
+            if (!start && !end) return;
+
+            chartConfig.dailyRange = 'custom';
+            chartConfig.customStart = start;
+            chartConfig.customEnd = end;
+            const mSel = document.getElementById('daily-month-select');
+            if (mSel) mSel.value = '';
+
+            updateDailyRangeButtonStyles();
+            renderDashboard();
+        }
+
+        function resetDateFilter() {
+            chartConfig.dailyRange = 'all';
+            chartConfig.selectedMonth = '';
+            chartConfig.customStart = '';
+            chartConfig.customEnd = '';
+            const mSel = document.getElementById('daily-month-select');
+            if (mSel) mSel.value = '';
+            const cStart = document.getElementById('custom-start-date');
+            if (cStart) cStart.value = '';
+            const cEnd = document.getElementById('custom-end-date');
+            if (cEnd) cEnd.value = '';
+
+            updateDailyRangeButtonStyles();
+            renderDashboard();
+        }
+
+        function updateDailyRangeButtonStyles() {
+            ['7', '14', '30', 'all'].forEach(k => {
+                const btn = document.getElementById(`filter-btn-${k}`);
+                if (!btn) return;
+                const match = (k === '7' && chartConfig.dailyRange === 'last7') ||
+                              (k === '14' && chartConfig.dailyRange === 'last14') ||
+                              (k === '30' && chartConfig.dailyRange === 'last30') ||
+                              (k === 'all' && chartConfig.dailyRange === 'all');
+                if (match) {
+                    btn.className = "px-2.5 py-1 rounded-md bg-primary-600 text-white font-semibold shadow-xs transition-all";
+                } else {
+                    btn.className = "px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs";
+                }
+            });
+        }
+
+        // Focus on a specific day (zoom in around that date)
+        function focusDay(targetDate) {
+            switchView('daily');
+            const targetDt = new Date(targetDate + 'T00:00:00');
+            const startDt = new Date(targetDt.getTime() - (3 * 24 * 60 * 60 * 1000));
+            const endDt = new Date(targetDt.getTime() + (3 * 24 * 60 * 60 * 1000));
+
+            const startStr = startDt.toISOString().split('T')[0];
+            const endStr = endDt.toISOString().split('T')[0];
+
+            chartConfig.dailyRange = 'custom';
+            chartConfig.customStart = startStr;
+            chartConfig.customEnd = endStr;
+
+            const cStart = document.getElementById('custom-start-date');
+            if (cStart) cStart.value = startStr;
+            const cEnd = document.getElementById('custom-end-date');
+            if (cEnd) cEnd.value = endStr;
+
+            updateDailyRangeButtonStyles();
+            renderDashboard();
+
+            // Smooth scroll to chart
+            document.getElementById('mainChart').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Render Main Dashboard
+        function renderDashboard() {
+            const list = getCurrentActiveItems();
+            updateKPICards(list);
+            updateCharts(list);
+            renderTable(list);
+        }
+
+        // Update KPI Cards
+        function updateKPICards(items) {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let finalBalance = 0;
+            let lastDateLabel = '-';
+
+            if (items.length > 0) {
+                items.forEach(it => {
+                    totalIncome += it.income;
+                    totalExpense += it.expense;
+                });
+                const lastItem = items[items.length - 1];
+                finalBalance = lastItem.balance;
+                lastDateLabel = lastItem.displayDate || lastItem.dateRange || lastItem.fullLabel || lastItem.label;
+            }
+
+            const netCashFlow = totalIncome - totalExpense;
+            const count = items.length || 1;
+            const avgIncome = totalIncome / count;
+            const avgExpense = totalExpense / count;
+
+            // Unit tags
+            const unitText = currentUnit === 'mb' ? 'ล้านบาท' : 'บาท';
+            document.getElementById('kpi-balance-unit').innerText = unitText;
+            document.getElementById('kpi-income-unit').innerText = unitText;
+            document.getElementById('kpi-expense-unit').innerText = unitText;
+            document.getElementById('kpi-net-unit').innerText = unitText;
+
+            // Balance Card
+            document.getElementById('kpi-balance').innerText = currentUnit === 'mb' ? (finalBalance / 1000000).toFixed(2) : formatExactNumber(finalBalance);
+            document.getElementById('kpi-balance-date').innerText = `ข้อมูลล่าสุด: ${lastDateLabel}`;
+
+            // Income Card
+            document.getElementById('kpi-income').innerText = currentUnit === 'mb' ? (totalIncome / 1000000).toFixed(2) : formatExactNumber(totalIncome);
+            const modeSuffix = currentMode === 'daily' ? 'วัน' : (currentMode === 'weekly' ? 'สัปดาห์' : 'เดือน');
+            document.getElementById('kpi-income-title').innerText = `รวมรายรับ (${items.length} ${modeSuffix})`;
+            document.getElementById('kpi-avg-income').innerText = `เฉลี่ย: ${formatMoney(avgIncome)} / ${modeSuffix}`;
+
+            // Expense Card
+            document.getElementById('kpi-expense').innerText = currentUnit === 'mb' ? (totalExpense / 1000000).toFixed(2) : formatExactNumber(totalExpense);
+            document.getElementById('kpi-expense-title').innerText = `รวมรายจ่าย (${items.length} ${modeSuffix})`;
+            document.getElementById('kpi-avg-expense').innerText = `เฉลี่ย: ${formatMoney(avgExpense)} / ${modeSuffix}`;
+
+            // Net Cash Flow Card
+            const netEl = document.getElementById('kpi-net');
+            const netStatusEl = document.getElementById('kpi-net-status');
+            const netRatioEl = document.getElementById('kpi-net-ratio');
+            const netBadgeIcon = document.getElementById('kpi-net-badge-icon');
+
+            netEl.innerText = (netCashFlow >= 0 ? '+' : '') + (currentUnit === 'mb' ? (netCashFlow / 1000000).toFixed(2) : formatExactNumber(netCashFlow));
+            
+            if (netCashFlow >= 0) {
+                netEl.className = "text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-600";
+                netBadgeIcon.className = "w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shadow-sm";
+                netBadgeIcon.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i>`;
+                netStatusEl.innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i>กระแสเงินสดเป็นบวก</span>`;
+            } else {
+                netEl.className = "text-2xl sm:text-3xl font-extrabold tracking-tight text-rose-600";
+                netBadgeIcon.className = "w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm shadow-sm";
+                netBadgeIcon.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i>`;
+                netStatusEl.innerHTML = `<span class="text-rose-700 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>รายจ่ายมากกว่ารายรับ</span>`;
+            }
+
+            const totalVolume = totalIncome + totalExpense;
+            const incPct = totalVolume > 0 ? ((totalIncome / totalVolume) * 100).toFixed(1) : 0;
+            const expPct = totalVolume > 0 ? ((totalExpense / totalVolume) * 100).toFixed(1) : 0;
+            netRatioEl.innerText = `รับ ${incPct}% / จ่าย ${expPct}%`;
+
+            // Breakdown card elements (if present)
+            const incPctEl = document.getElementById('breakdown-income-pct');
+            if (incPctEl) incPctEl.innerText = `${incPct}% (${formatMoney(totalIncome)})`;
+            const expPctEl = document.getElementById('breakdown-expense-pct');
+            if (expPctEl) expPctEl.innerText = `${expPct}% (${formatMoney(totalExpense)})`;
+
+            const healthEl = document.getElementById('breakdown-health-text');
+            if (healthEl) {
+                if (finalBalance > (totalExpense * 1.5)) {
+                    healthEl.innerText = 'สภาพคล่องแข็งแกร่งมาก';
+                    healthEl.className = 'font-bold text-emerald-700';
+                } else if (finalBalance >= totalExpense) {
+                    healthEl.innerText = 'สภาพคล่องเพียงพอ';
+                    healthEl.className = 'font-bold text-blue-700';
+                } else {
+                    healthEl.innerText = 'ควรระวังเงินสดตึงตัว';
+                    healthEl.className = 'font-bold text-rose-600';
+                }
+            }
+
+            // Header Range Label
+            const firstItem = items[0];
+            const lastItem = items[items.length - 1];
+            if (firstItem && lastItem) {
+                const startStr = firstItem.displayDate || firstItem.dateRange || firstItem.fullLabel || firstItem.label;
+                const endStr = lastItem.displayDate || lastItem.dateRange || lastItem.fullLabel || lastItem.label;
+                document.getElementById('current-range-label').innerText = `${startStr} ถึง ${endStr} (${items.length} รายการ)`;
+            } else {
+                document.getElementById('current-range-label').innerText = 'ไม่มีข้อมูล';
+            }
+        }
+
+        // Render Charts with Dynamic Datasets and Filters
+        function updateCharts(items) {
+            const labels = [];
+            const incomeData = [];
+            const expenseData = [];
+            const balanceData = [];
+            const netData = [];
+
+            const isMB = currentUnit === 'mb';
+            const divisor = isMB ? 1000000 : 1;
+
+            items.forEach(it => {
+                labels.push(it.label || it.displayDate);
+                incomeData.push(Number((it.income / divisor).toFixed(2)));
+                expenseData.push(Number((it.expense / divisor).toFixed(2)));
+                balanceData.push(Number((it.balance / divisor).toFixed(2)));
+                netData.push(Number((it.net / divisor).toFixed(2)));
+            });
+
+            // Update Titles
+            const modeText = currentMode === 'daily' ? 'รายวัน' : (currentMode === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน');
+            document.getElementById('chart-main-title').innerText = `กราฟแนวโน้มกระแสเงินสด (${modeText})`;
+            document.getElementById('chart-main-subtitle').innerText = `เปรียบเทียบตามตัวเลือกที่กำหนด (หน่วย: ${isMB ? 'ล้านบาท' : 'บาท'})`;
+
+            // Prepare Dynamic Datasets
+            const datasets = [];
+            const isLineType = chartConfig.chartType === 'line';
+            const isBarType = chartConfig.chartType === 'bar';
+            const hasDualY = chartConfig.showBalance && (chartConfig.showIncome || chartConfig.showExpense || chartConfig.showNet);
+
+            // 1. Balance Line
+            if (chartConfig.showBalance) {
+                datasets.push({
+                    type: isBarType ? 'bar' : 'line',
+                    label: 'เงินฝากคงเหลือ',
+                    data: balanceData,
+                    borderColor: '#2563eb',
+                    backgroundColor: isBarType ? '#3b82f6' : 'rgba(37, 99, 235, 0.08)',
+                    borderWidth: 3.5,
+                    pointBackgroundColor: '#2563eb',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: items.length > 30 ? 3.5 : 5.5,
+                    pointHoverRadius: 8.5,
+                    fill: !isBarType,
+                    yAxisID: hasDualY ? 'y1' : 'y',
+                    tension: 0.28,
+                    order: 1,
+                    datalabels: {
+                        display: chartConfig.showDataLabels,
+                        align: 'top',
+                        anchor: 'center',
+                        offset: 8,
+                        color: '#1e40af',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#93c5fd',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        padding: { top: 3, bottom: 3, left: 7, right: 7 },
+                        font: { family: 'Prompt', size: 11, weight: '700' },
+                        formatter: (val) => formatDataPointLabel(val)
+                    }
+                });
+            }
+
+            // 2. Income Line/Bar
+            if (chartConfig.showIncome) {
+                datasets.push({
+                    type: isLineType ? 'line' : 'bar',
+                    label: 'รายรับ',
+                    data: incomeData,
+                    borderColor: '#16a34a',
+                    backgroundColor: isLineType ? 'rgba(22, 163, 74, 0.04)' : '#22c55e',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#16a34a',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: items.length > 30 ? 3 : 5,
+                    pointHoverRadius: 8,
+                    borderRadius: 4,
+                    fill: false,
+                    yAxisID: 'y',
+                    tension: 0.28,
+                    order: 2,
+                    datalabels: {
+                        display: chartConfig.showDataLabels,
+                        align: isLineType ? 'top' : 'center',
+                        anchor: isLineType ? 'center' : 'end',
+                        offset: 8,
+                        color: '#15803d',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#86efac',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        padding: { top: 2.5, bottom: 2.5, left: 6, right: 6 },
+                        font: { family: 'Prompt', size: 10.5, weight: '700' },
+                        formatter: (val) => formatDataPointLabel(val)
+                    }
+                });
+            }
+
+            // 3. Expense Line/Bar
+            if (chartConfig.showExpense) {
+                datasets.push({
+                    type: isLineType ? 'line' : 'bar',
+                    label: 'รายจ่าย',
+                    data: expenseData,
+                    borderColor: '#dc2626',
+                    backgroundColor: isLineType ? 'rgba(220, 38, 38, 0.04)' : '#ef4444',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#dc2626',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: items.length > 30 ? 3 : 5,
+                    pointHoverRadius: 8,
+                    borderRadius: 4,
+                    fill: false,
+                    yAxisID: 'y',
+                    tension: 0.28,
+                    order: 3,
+                    datalabels: {
+                        display: chartConfig.showDataLabels,
+                        align: isLineType ? 'bottom' : 'center',
+                        anchor: isLineType ? 'center' : 'start',
+                        offset: 8,
+                        color: '#b91c1c',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#fca5a5',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        padding: { top: 2.5, bottom: 2.5, left: 6, right: 6 },
+                        font: { family: 'Prompt', size: 10.5, weight: '700' },
+                        formatter: (val) => formatDataPointLabel(val)
+                    }
+                });
+            }
+
+            // 4. Net Cash Flow
+            if (chartConfig.showNet) {
+                datasets.push({
+                    type: isLineType ? 'line' : 'bar',
+                    label: 'สุทธิ (Net)',
+                    data: netData,
+                    borderColor: '#9333ea',
+                    backgroundColor: isLineType ? 'rgba(147, 51, 234, 0.05)' : '#a855f7',
+                    borderWidth: 2.5,
+                    borderDash: isLineType ? [5, 4] : [],
+                    pointBackgroundColor: '#9333ea',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: items.length > 30 ? 2.5 : 4.5,
+                    borderRadius: 4,
+                    fill: false,
+                    yAxisID: 'y',
+                    tension: 0.28,
+                    order: 4,
+                    datalabels: {
+                        display: chartConfig.showDataLabels,
+                        align: 'bottom',
+                        anchor: 'center',
+                        offset: 8,
+                        color: '#7e22ce',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#d8b4fe',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        padding: { top: 2.5, bottom: 2.5, left: 6, right: 6 },
+                        font: { family: 'Prompt', size: 10.5, weight: '700' },
+                        formatter: (val) => (val > 0 ? '+' : '') + formatDataPointLabel(val)
+                    }
+                });
+            }
+
+            // 1. Main Line/Combo Chart
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (mainChart) {
+                mainChart.destroy();
+            }
+
+            const activePlugins = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+
+            mainChart = new Chart(ctx, {
+                type: isBarType ? 'bar' : 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                plugins: activePlugins,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 32,
+                            bottom: 12,
+                            left: 10,
+                            right: 15
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleFont: { family: 'Prompt', size: 13, weight: 'bold' },
+                            bodyFont: { family: 'Prompt', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.parsed.y;
+                                    const unitName = isMB ? ' ล้านบาท' : ' บาท';
+                                    return ` ${context.dataset.label}: ${new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2 }).format(val)}${unitName}`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: false // global fallback; individual datasets control display
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Prompt', size: 11 },
+                                maxRotation: 45,
+                                autoSkip: true,
+                                maxTicksLimit: 15
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            grace: '14%',
+                            title: {
+                                display: true,
+                                text: `${hasDualY ? 'รายรับ / รายจ่าย' : 'จำนวนเงิน'} (${isMB ? 'ล้านบาท' : 'บาท'})`,
+                                font: { family: 'Prompt', size: 11 }
+                            },
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                font: { family: 'Prompt', size: 11 }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: hasDualY,
+                            position: 'right',
+                            grace: '14%',
+                            title: {
+                                display: hasDualY,
+                                text: `เงินฝากคงเหลือ (${isMB ? 'ล้านบาท' : 'บาท'})`,
+                                font: { family: 'Prompt', size: 11 },
+                                color: '#2563eb'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                font: { family: 'Prompt', size: 11 },
+                                color: '#2563eb'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Ratio Doughnut Chart (if container exists)
+            const ratioCanvas = document.getElementById('ratioChart');
+            if (ratioCanvas) {
+                let sumInc = 0;
+                let sumExp = 0;
+                items.forEach(it => { sumInc += it.income; sumExp += it.expense; });
+
+                const ratioCtx = ratioCanvas.getContext('2d');
+                if (ratioChart) {
+                    ratioChart.destroy();
+                }
+
+                ratioChart = new Chart(ratioCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['รายรับรวม', 'รายจ่ายรวม'],
+                        datasets: [{
+                            data: [sumInc, sumExp],
+                            backgroundColor: ['#22c55e', '#ef4444'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '76%',
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.label}: ${formatMoney(context.parsed, true)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Render Data Table
+        function renderTable(items) {
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+            const tfoot = document.getElementById('table-foot');
+            const titleEl = document.getElementById('table-title');
+            const badgeEl = document.getElementById('table-count-badge');
+
+            tbody.innerHTML = '';
+            badgeEl.innerText = `${items.length} รายการ`;
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            if (currentMode === 'daily') {
+                titleEl.innerText = 'ตารางแสดงบัญชียอดประจำวัน (Daily Summary)';
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-4 py-3.5 whitespace-nowrap">วันที่</th>
+                        <th class="px-4 py-3.5 text-right whitespace-nowrap text-slate-700">ยอดยกมาคงเหลือ (บาท)</th>
+                        <th class="px-4 py-3.5 text-right whitespace-nowrap text-emerald-700">รับ (บาท)</th>
+                        <th class="px-4 py-3.5 text-right whitespace-nowrap text-rose-700">จ่าย (บาท)</th>
+                        <th class="px-4 py-3.5 text-right whitespace-nowrap text-slate-700">รับ/จ่าย สุทธิ (บาท)</th>
+                        <th class="px-4 py-3.5 text-right whitespace-nowrap text-primary-800 font-bold bg-primary-50/60">เงินฝากคงเหลือสิ้นวัน (บาท)</th>
+                        <th class="px-4 py-3.5 whitespace-nowrap">หมายเหตุ</th>
+                        <th class="px-4 py-3.5 text-center whitespace-nowrap no-print">จัดการ</th>
+                    </tr>
+                `;
+
+                items.forEach((r) => {
+                    totalIncome += r.income;
+                    totalExpense += r.expense;
+                    const netColor = r.net >= 0 ? 'text-emerald-600' : 'text-rose-600';
+                    const netSign = r.net > 0 ? '+' : '';
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="px-4 py-3.5 font-medium text-slate-900 whitespace-nowrap flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-primary-500"></span>
+                            ${r.displayDate || r.date}
+                        </td>
+                        <td class="px-4 py-3.5 text-right text-slate-700 whitespace-nowrap font-medium">${formatExactNumber(r.prevBalance)}</td>
+                        <td class="px-4 py-3.5 text-right text-emerald-600 font-semibold whitespace-nowrap">${formatExactNumber(r.income)}</td>
+                        <td class="px-4 py-3.5 text-right text-rose-600 font-semibold whitespace-nowrap">${formatExactNumber(r.expense)}</td>
+                        <td class="px-4 py-3.5 text-right ${netColor} font-bold whitespace-nowrap">${netSign}${formatExactNumber(r.net)}</td>
+                        <td class="px-4 py-3.5 text-right font-bold text-slate-900 bg-primary-50/30 whitespace-nowrap">${formatExactNumber(r.balance)}</td>
+                        <td class="px-4 py-3.5 text-slate-500 text-xs max-w-xs truncate" title="${r.note}">${r.note || '-'}</td>
+                        <td class="px-4 py-3.5 text-center whitespace-nowrap no-print">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="focusDay('${r.date}')" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="ซูมดูกราฟช่วงวันนี้">
+                                    <i class="fa-solid fa-crosshairs text-xs"></i>
+                                </button>
+                                <button onclick="editRecord('${r.date}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" title="แก้ไข">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                                <button onclick="deleteRecord('${r.id}', '${r.date}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="ลบ">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const totalNet = totalIncome - totalExpense;
+                const finalBal = items.length > 0 ? items[items.length - 1].balance : 0;
+                const initialPrev = items.length > 0 ? items[0].prevBalance : 0;
+                tfoot.innerHTML = `
+                    <tr>
+                        <td class="px-4 py-4 font-semibold">รวมทั้งสิ้น (${items.length} วัน)</td>
+                        <td class="px-4 py-4 text-right text-slate-600 font-semibold">${formatExactNumber(initialPrev)}</td>
+                        <td class="px-4 py-4 text-right text-emerald-600 font-bold">${formatExactNumber(totalIncome)}</td>
+                        <td class="px-4 py-4 text-right text-rose-600 font-bold">${formatExactNumber(totalExpense)}</td>
+                        <td class="px-4 py-4 text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-bold">${(totalNet > 0 ? '+' : '') + formatExactNumber(totalNet)}</td>
+                        <td class="px-4 py-4 text-right text-primary-700 font-extrabold bg-primary-50/50">${formatExactNumber(finalBal)}</td>
+                        <td class="px-4 py-4" colspan="2"></td>
+                    </tr>
+                `;
+
+            } else if (currentMode === 'weekly') {
+                titleEl.innerText = 'ตารางสรุปกระแสเงินสดรายสัปดาห์ (Weekly Summary)';
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-5 py-3.5 whitespace-nowrap">สัปดาห์</th>
+                        <th class="px-5 py-3.5 whitespace-nowrap">ช่วงวันที่</th>
+                        <th class="px-5 py-3.5 text-center whitespace-nowrap">จำนวนวัน</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">รวมรายรับ (บาท)</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">รวมรายจ่าย (บาท)</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">กระแสเงินสดสุทธิ (บาท)</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">เงินฝากคงเหลือสิ้นสัปดาห์ (บาท)</th>
+                    </tr>
+                `;
+
+                items.forEach((w) => {
+                    totalIncome += w.income;
+                    totalExpense += w.expense;
+                    const netColor = w.net >= 0 ? 'text-emerald-600' : 'text-rose-600';
+                    const netSign = w.net > 0 ? '+' : '';
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="px-5 py-3.5 font-bold text-slate-900 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+                                <i class="fa-solid fa-calendar-week"></i> ${w.label}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3.5 text-slate-700 font-medium whitespace-nowrap">${w.dateRange}</td>
+                        <td class="px-5 py-3.5 text-center text-slate-500 whitespace-nowrap">${w.daysCount} วัน</td>
+                        <td class="px-5 py-3.5 text-right text-emerald-600 font-semibold whitespace-nowrap">${formatExactNumber(w.income)}</td>
+                        <td class="px-5 py-3.5 text-right text-rose-600 font-semibold whitespace-nowrap">${formatExactNumber(w.expense)}</td>
+                        <td class="px-5 py-3.5 text-right ${netColor} font-bold whitespace-nowrap">${netSign}${formatExactNumber(w.net)}</td>
+                        <td class="px-5 py-3.5 text-right font-bold text-slate-800 whitespace-nowrap">${formatExactNumber(w.balance)}</td>
+                    </tr>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const totalNet = totalIncome - totalExpense;
+                const finalBal = items.length > 0 ? items[items.length - 1].balance : 0;
+                tfoot.innerHTML = `
+                    <tr>
+                        <td class="px-5 py-4" colspan="3">รวมทั้งสิ้น (${items.length} สัปดาห์)</td>
+                        <td class="px-5 py-4 text-right text-emerald-600 font-bold">${formatExactNumber(totalIncome)}</td>
+                        <td class="px-5 py-4 text-right text-rose-600 font-bold">${formatExactNumber(totalExpense)}</td>
+                        <td class="px-5 py-4 text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-bold">${(totalNet > 0 ? '+' : '') + formatExactNumber(totalNet)}</td>
+                        <td class="px-5 py-4 text-right text-primary-700 font-extrabold">${formatExactNumber(finalBal)}</td>
+                    </tr>
+                `;
+
+            } else if (currentMode === 'monthly') {
+                titleEl.innerText = 'ตารางสรุปกระแสเงินสดรายเดือน (Monthly Summary)';
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-5 py-3.5 whitespace-nowrap">เดือน / ปี</th>
+                        <th class="px-5 py-3.5 text-center whitespace-nowrap">จำนวนวันบันทึก</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">รวมรายรับ (บาท)</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">รวมรายจ่าย (บาท)</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">กระแสเงินสดสุทธิ (บาท)</th>
+                        <th class="px-5 py-3.5 text-right whitespace-nowrap">เงินฝากคงเหลือสิ้นเดือน (บาท)</th>
+                    </tr>
+                `;
+
+                items.forEach((m) => {
+                    totalIncome += m.income;
+                    totalExpense += m.expense;
+                    const netColor = m.net >= 0 ? 'text-emerald-600' : 'text-rose-600';
+                    const netSign = m.net > 0 ? '+' : '';
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="px-5 py-3.5 font-bold text-slate-900 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                                <i class="fa-solid fa-calendar-check"></i> ${m.fullLabel || m.label}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3.5 text-center text-slate-500 whitespace-nowrap">${m.daysCount} วัน</td>
+                        <td class="px-5 py-3.5 text-right text-emerald-600 font-semibold whitespace-nowrap">${formatExactNumber(m.income)}</td>
+                        <td class="px-5 py-3.5 text-right text-rose-600 font-semibold whitespace-nowrap">${formatExactNumber(m.expense)}</td>
+                        <td class="px-5 py-3.5 text-right ${netColor} font-bold whitespace-nowrap">${netSign}${formatExactNumber(m.net)}</td>
+                        <td class="px-5 py-3.5 text-right font-bold text-slate-800 whitespace-nowrap">${formatExactNumber(m.balance)}</td>
+                    </tr>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const totalNet = totalIncome - totalExpense;
+                const finalBal = items.length > 0 ? items[items.length - 1].balance : 0;
+                tfoot.innerHTML = `
+                    <tr>
+                        <td class="px-5 py-4" colspan="2">รวมทั้งสิ้น (${items.length} เดือน)</td>
+                        <td class="px-5 py-4 text-right text-emerald-600 font-bold">${formatExactNumber(totalIncome)}</td>
+                        <td class="px-5 py-4 text-right text-rose-600 font-bold">${formatExactNumber(totalExpense)}</td>
+                        <td class="px-5 py-4 text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-bold">${(totalNet > 0 ? '+' : '') + formatExactNumber(totalNet)}</td>
+                        <td class="px-5 py-4 text-right text-primary-700 font-extrabold">${formatExactNumber(finalBal)}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Table Search Filter
+        function filterTable() {
+            const query = document.getElementById('table-search').value.toLowerCase().trim();
+            const list = getCurrentActiveItems();
+            if (!query) {
+                renderTable(list);
+                return;
+            }
+
+            const filtered = list.filter(item => {
+                const text = `${item.date || ''} ${item.displayDate || ''} ${item.label || ''} ${item.dateRange || ''} ${item.fullLabel || ''} ${item.note || ''}`.toLowerCase();
+                return text.includes(query);
+            });
+            renderTable(filtered);
+        }
+
+        // Modal Controls
+        function openRecordModal(date = null) {
+            const modal = document.getElementById('recordModal');
+            const titleEl = document.getElementById('modal-title');
+            const form = document.getElementById('recordForm');
+            form.reset();
+
+            if (date) {
+                titleEl.innerText = 'แก้ไขยอดประจำวัน';
+                const target = (summaryData.daily || []).find(r => r.date === date);
+                if (target) {
+                    document.getElementById('entry-id').value = target.id || '';
+                    document.getElementById('entry-date').value = target.date;
+                    document.getElementById('entry-income').value = target.income;
+                    document.getElementById('entry-expense').value = target.expense;
+                    document.getElementById('entry-balance').value = target.balance;
+                    document.getElementById('entry-note').value = target.note || '';
+                    calculateClosingBalance();
+                    document.getElementById('entry-balance').value = target.balance; // retain stored balance
+                }
+            } else {
+                titleEl.innerText = 'บันทึกยอดประจำวันใหม่';
+                document.getElementById('entry-id').value = '';
+                setTodayDate();
+                calculateClosingBalance();
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeRecordModal() {
+            document.getElementById('recordModal').classList.add('hidden');
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('entry-date').value = today;
+        }
+
+        function calculateClosingBalance() {
+            const income = parseFloat(document.getElementById('entry-income').value) || 0;
+            const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
+            const curDate = document.getElementById('entry-date').value;
+
+            // Find previous record balance before this date
+            const daily = summaryData.daily || [];
+            let prevBalance = 0;
+            if (daily.length > 0) {
+                const priorRecords = daily.filter(r => r.date < curDate);
+                if (priorRecords.length > 0) {
+                    prevBalance = priorRecords[priorRecords.length - 1].balance;
+                } else {
+                    prevBalance = daily[0].balance - (daily[0].income - daily[0].expense);
+                }
+            }
+
+            const prevDisplay = document.getElementById('entry-prev-balance-display');
+            if (prevDisplay) {
+                prevDisplay.innerText = '฿' + formatExactNumber(prevBalance);
+            }
+
+            const estimatedBalance = prevBalance + income - expense;
+            document.getElementById('entry-balance').value = estimatedBalance.toFixed(2);
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('entry-date').value;
+            const income = parseFloat(document.getElementById('entry-income').value) || 0;
+            const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
+            const balance = parseFloat(document.getElementById('entry-balance').value) || 0;
+            const note = document.getElementById('entry-note').value.trim();
+
+            const payload = { date, income, expense, balance, note, updatedAt: new Date().toISOString() };
+
+            if (dataSource === 'firebase' && firebaseRef) {
+                // Save to Firebase Realtime Database
+                try {
+                    await firebaseRef.child(date).set(payload);
+                    closeRecordModal();
+                    // Listener triggers re-render automatically!
+                } catch (err) {
+                    alert('เกิดข้อผิดพลาดในการบันทึกขึ้น Firebase: ' + err.message);
+                }
+                return;
+            } else if (dataSource === 'sqlite') {
+                // Save to SQLite via Server API
+                try {
+                    const res = await fetch('/api/records', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('API save failed');
+                } catch (err) {
+                    alert('เกิดข้อผิดพลาดในการบันทึกลงฐานข้อมูล SQLite: ' + err.message);
+                    return;
+                }
+            } else {
+                // LocalStorage save
+                const idx = rawRecords.findIndex(r => r.date === date);
+                if (idx >= 0) {
+                    rawRecords[idx] = { ...rawRecords[idx], ...payload };
+                } else {
+                    rawRecords.push(payload);
+                }
+                localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+            }
+
+            closeRecordModal();
+            await loadData();
+        }
+
+        function editRecord(date) {
+            openRecordModal(date);
+        }
+
+        async function deleteRecord(id, date) {
+            if (!confirm(`คุณต้องการลบข้อมูลวันที่ ${formatThaiDateStr(date)} หรือไม่?`)) return;
+
+            if (dataSource === 'firebase' && firebaseRef) {
+                try {
+                    await firebaseRef.child(date).remove();
+                    // Listener updates UI automatically
+                } catch (err) {
+                    alert('ไม่สามารถลบข้อมูลจาก Firebase: ' + err.message);
+                }
+                return;
+            } else if (dataSource === 'sqlite') {
+                try {
+                    const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
+                    if (!res.ok) throw new Error('Delete failed');
+                } catch (err) {
+                    alert('ไม่สามารถลบข้อมูลได้: ' + err.message);
+                    return;
+                }
+            } else {
+                rawRecords = rawRecords.filter(r => r.date !== date);
+                localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+            }
+
+            await loadData();
+        }
+
+        async function resetSampleData() {
+            if (!confirm('ต้องการรีเซ็ตข้อมูลทั้งหมดกลับเป็นชุดข้อมูลตัวอย่างเริ่มต้นหรือไม่?')) return;
+
+            if (dataSource === 'firebase' && firebaseRef) {
+                // Overwrite Firebase with sample records
+                const sample = getDefaultSampleRecords();
+                const updates = {};
+                sample.forEach(r => {
+                    updates[r.date] = { ...r, updatedAt: new Date().toISOString() };
+                });
+                try {
+                    await firebaseRef.set(updates);
+                    alert('รีเซ็ตข้อมูลตัวอย่างบน Firebase เรียบร้อย!');
+                } catch (e) {
+                    alert('ไม่สามารถรีเซ็ตบน Firebase ได้: ' + e.message);
+                }
+                return;
+            } else if (dataSource === 'sqlite') {
+                try {
+                    await fetch('/api/reset-sample', { method: 'POST' });
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                rawRecords = getDefaultSampleRecords();
+                localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+            }
+
+            await loadData();
+        }
+
+        function exportCSV() {
+            if (dataSource === 'sqlite') {
+                window.location.href = '/api/export/csv';
+                return;
+            }
+
+            const daily = summaryData.daily || [];
+            let csv = "\ufeffวันที่,ยอดยกมาคงเหลือ (บาท),รายรับ (บาท),รายจ่าย (บาท),รับ/จ่าย สุทธิ (บาท),เงินฝากคงเหลือสิ้นวัน (บาท),หมายเหตุ\n";
+            daily.forEach(r => {
+                csv += `"${r.displayDate || r.date}",${r.prevBalance},${r.income},${r.expense},${r.net},${r.balance},"${r.note || ''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `cash_flow_report_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initChartSize();
+            loadData();
+        });
+    </script>
+</body>
+</html>
