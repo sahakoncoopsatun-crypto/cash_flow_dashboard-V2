@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบบริหารจัดการกระแสเงินสด (Cash Flow Dashboard)</title>
     
+    <!-- PWA & Mobile Web App Capabilities -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Cash Flow">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    
     <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -62,9 +72,17 @@
         }
     </script>
     <style>
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
         body {
             background-color: #f8fafc;
             font-family: 'Prompt', sans-serif;
+        }
+        .table-container {
+            -webkit-overflow-scrolling: touch;
         }
         .table-container::-webkit-scrollbar {
             height: 7px;
@@ -120,66 +138,91 @@
 
     <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
-        <div class="w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+        <div class="w-full max-w-[1850px] mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 gap-2">
                 <!-- Brand Title -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary-600 text-white p-2.5 rounded-xl shadow-md shadow-primary-500/20 flex items-center justify-center">
-                        <i class="fa-solid fa-wallet text-xl"></i>
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div class="bg-primary-600 text-white p-2 sm:p-2.5 rounded-xl shadow-md shadow-primary-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-wallet text-base sm:text-xl"></i>
                     </div>
-                    <div>
-                        <h1 class="font-bold text-lg sm:text-xl text-slate-900 leading-tight">ระบบบริหารกระแสเงินสด</h1>
-                        <p class="text-xs text-slate-500 flex items-center gap-1.5">
-                            <span id="connection-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <div class="min-w-0">
+                        <h1 class="font-bold text-sm xs:text-base sm:text-lg lg:text-xl text-slate-900 leading-tight truncate">ระบบบริหารกระแสเงินสด</h1>
+                        <p class="text-[10px] sm:text-xs text-slate-500 flex items-center gap-1 sm:gap-1.5 truncate">
+                            <span id="connection-badge" class="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                SQLite เชื่อมต่อแล้ว
+                                SQLite
                             </span>
                             <span class="hidden sm:inline text-slate-300">|</span>
-                            <span class="hidden sm:inline">Daily, Weekly & Monthly</span>
+                            <span class="hidden sm:inline truncate">Daily, Weekly & Monthly</span>
                         </p>
                     </div>
                 </div>
 
                 <!-- Action Buttons in Nav -->
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 shrink-0">
                     <!-- Executive Read-Only Badge (Visible in Read-Only Mode) -->
-                    <div id="executive-badge" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs">
+                    <div id="executive-badge" class="hidden items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs">
                         <i class="fa-solid fa-shield-halved text-emerald-600"></i>
-                        <span>โหมดผู้บริหาร (ดูได้อย่างเดียว)</span>
+                        <span class="hidden xs:inline">โหมดผู้บริหาร</span>
+                        <span class="hidden md:inline"> (ดูได้อย่างเดียว)</span>
                     </div>
 
                     <!-- Executive Share Link Button (Visible in Admin Mode) -->
-                    <button onclick="openShareModal()" id="nav-share-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-xs cursor-pointer" title="สร้างลิงก์สำหรับผู้บริหาร (ดูข้อมูลได้อย่างเดียว)">
+                    <button onclick="openShareModal()" id="nav-share-btn" class="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-xs cursor-pointer" title="สร้างลิงก์สำหรับผู้บริหาร (ดูข้อมูลได้อย่างเดียว)">
                         <i class="fa-solid fa-share-nodes text-indigo-600"></i>
-                        <span class="hidden sm:inline">สร้างลิงก์ผู้บริหาร</span>
+                        <span class="hidden lg:inline">สร้างลิงก์ผู้บริหาร</span>
+                    </button>
+
+                    <!-- Mobile App Install Button -->
+                    <button onclick="openMobileInstallModal()" id="nav-install-btn" class="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 shadow-xs cursor-pointer" title="วิธีติดตั้งแอปบนหน้าจอมือถือ (iOS / Android)">
+                        <i class="fa-solid fa-mobile-screen-button text-emerald-600"></i>
+                        <span class="hidden lg:inline">ติดตั้งลงมือถือ</span>
                     </button>
 
                     <!-- Firebase Settings Button -->
-                    <button onclick="openFirebaseModal()" id="nav-firebase-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 shadow-xs" title="ตั้งค่า Firebase Realtime Database">
+                    <button onclick="openFirebaseModal()" id="nav-firebase-btn" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 shadow-xs cursor-pointer" title="ตั้งค่า Firebase Realtime Database">
                         <i class="fa-solid fa-fire text-amber-500"></i>
-                        <span class="hidden sm:inline" id="nav-firebase-text">Firebase Realtime</span>
+                        <span class="hidden xl:inline" id="nav-firebase-text">Firebase Realtime</span>
                     </button>
 
                     <!-- Add Record Button -->
-                    <button onclick="openRecordModal()" id="nav-add-record-btn" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3.5 py-2 rounded-lg font-medium text-sm transition-all shadow-sm shadow-primary-500/30 cursor-pointer">
+                    <button onclick="openRecordModal()" id="nav-add-record-btn" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all shadow-sm shadow-primary-500/30 cursor-pointer">
                         <i class="fa-solid fa-plus text-xs"></i>
-                        <span>บันทึกยอดประจำวัน</span>
+                        <span>บันทึกยอด</span>
                     </button>
                     
                     <!-- Export CSV Button -->
-                    <button onclick="exportCSV()" id="nav-export-btn" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="ดาวน์โหลด CSV / Excel">
-                        <i class="fa-solid fa-file-csv text-base"></i>
+                    <button onclick="exportCSV()" id="nav-export-btn" class="p-1.5 sm:p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="ดาวน์โหลด CSV / Excel">
+                        <i class="fa-solid fa-file-csv text-sm sm:text-base"></i>
                     </button>
 
                     <!-- Print Button -->
-                    <button onclick="window.print()" id="nav-print-btn" class="p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="พิมพ์รายงาน">
-                        <i class="fa-solid fa-print text-base"></i>
+                    <button onclick="window.print()" id="nav-print-btn" class="p-1.5 sm:p-2 text-slate-600 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer hidden md:inline-flex" title="พิมพ์รายงาน">
+                        <i class="fa-solid fa-print text-sm sm:text-base"></i>
                     </button>
 
                     <!-- Reset Button -->
-                    <button onclick="resetSampleData()" id="nav-reset-btn" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="รีเซ็ตเป็นข้อมูลตัวอย่าง">
-                        <i class="fa-solid fa-arrow-rotate-left text-sm"></i>
+                    <button onclick="resetSampleData()" id="nav-reset-btn" class="p-1.5 sm:p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-slate-200 cursor-pointer hidden md:inline-flex" title="รีเซ็ตเป็นข้อมูลตัวอย่าง">
+                        <i class="fa-solid fa-arrow-rotate-left text-xs sm:text-sm"></i>
                     </button>
+
+                    <!-- Mobile More Menu Dropdown (Visible on small screens) -->
+                    <div class="relative md:hidden" id="nav-more-dropdown-container">
+                        <button onclick="toggleMobileMoreMenu()" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 cursor-pointer" title="เมนูเพิ่มเติม">
+                            <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
+                        </button>
+                        <div id="mobile-more-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs">
+                            <button onclick="openFirebaseModal(); toggleMobileMoreMenu();" id="mobile-menu-fb-btn" class="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700">
+                                <i class="fa-solid fa-fire text-amber-500 w-4"></i> Firebase Realtime
+                            </button>
+                            <button onclick="window.print(); toggleMobileMoreMenu();" class="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700">
+                                <i class="fa-solid fa-print text-slate-500 w-4"></i> พิมพ์รายงาน
+                            </button>
+                            <button onclick="resetSampleData(); toggleMobileMoreMenu();" id="mobile-menu-reset-btn" class="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-rose-600">
+                                <i class="fa-solid fa-arrow-rotate-left text-rose-500 w-4"></i> รีเซ็ตข้อมูล
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,85 +293,93 @@
             </div>
         </div>
 
-        <!-- KPI Cards Grid (4 Cards) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <!-- KPI Cards Grid (Responsive: 2 columns on mobile, 4 columns on large screens) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
             
             <!-- Card 1: เงินฝากคงเหลือปัจจุบัน -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-primary-500/40 transition-all">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">เงินคงเหลือล่าสุด</span>
-                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm shadow-sm">
-                        <i class="fa-solid fa-vault"></i>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-5 relative overflow-hidden group hover:border-primary-500/40 transition-all flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">เงินคงเหลือล่าสุด</span>
+                        <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-lg sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight truncate" id="kpi-balance">0.00</span>
+                        <span class="text-[10px] sm:text-xs text-slate-500 font-medium" id="kpi-balance-unit">บาท</span>
                     </div>
                 </div>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="kpi-balance">0.00</span>
-                    <span class="text-xs text-slate-500 font-medium" id="kpi-balance-unit">บาท</span>
-                </div>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <span class="flex items-center gap-1">
-                        <i class="fa-regular fa-clock text-slate-400"></i>
+                <div class="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
+                    <span class="flex items-center gap-1 truncate">
+                        <i class="fa-regular fa-clock text-slate-400 hidden sm:inline"></i>
                         <span id="kpi-balance-date">-</span>
                     </span>
-                    <span class="text-blue-600 font-medium">ณ สิ้นสุดช่วง</span>
+                    <span class="text-blue-600 font-medium whitespace-nowrap">สิ้นสุดช่วง</span>
                 </div>
             </div>
 
             <!-- Card 2: รวมรายรับ -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" id="kpi-income-title">รวมรายรับ</span>
-                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shadow-sm">
-                        <i class="fa-solid fa-arrow-down-left text-xs"></i>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-5 relative overflow-hidden group hover:border-emerald-500/40 transition-all flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400" id="kpi-income-title">รวมรายรับ</span>
+                        <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
+                            <i class="fa-solid fa-arrow-down-left text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-lg sm:text-2xl lg:text-3xl font-extrabold text-emerald-600 tracking-tight truncate" id="kpi-income">0.00</span>
+                        <span class="text-[10px] sm:text-xs text-slate-500 font-medium" id="kpi-income-unit">บาท</span>
                     </div>
                 </div>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight" id="kpi-income">0.00</span>
-                    <span class="text-xs text-slate-500 font-medium" id="kpi-income-unit">บาท</span>
-                </div>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <div class="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
                     <span class="text-emerald-700 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-circle-plus text-[10px]"></i> เงินเข้า
+                        <i class="fa-solid fa-circle-plus text-[9px]"></i> เงินเข้า
                     </span>
-                    <span id="kpi-avg-income" class="text-slate-500">เฉลี่ย: -</span>
+                    <span id="kpi-avg-income" class="text-slate-500 truncate">เฉลี่ย: -</span>
                 </div>
             </div>
 
             <!-- Card 3: รวมรายจ่าย -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-rose-500/40 transition-all">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" id="kpi-expense-title">รวมรายจ่าย</span>
-                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm shadow-sm">
-                        <i class="fa-solid fa-arrow-up-right text-xs"></i>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-5 relative overflow-hidden group hover:border-rose-500/40 transition-all flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400" id="kpi-expense-title">รวมรายจ่าย</span>
+                        <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
+                            <i class="fa-solid fa-arrow-up-right text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-lg sm:text-2xl lg:text-3xl font-extrabold text-rose-600 tracking-tight truncate" id="kpi-expense">0.00</span>
+                        <span class="text-[10px] sm:text-xs text-slate-500 font-medium" id="kpi-expense-unit">บาท</span>
                     </div>
                 </div>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight" id="kpi-expense">0.00</span>
-                    <span class="text-xs text-slate-500 font-medium" id="kpi-expense-unit">บาท</span>
-                </div>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <div class="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
                     <span class="text-rose-700 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-circle-minus text-[10px]"></i> เงินออก
+                        <i class="fa-solid fa-circle-minus text-[9px]"></i> เงินออก
                     </span>
-                    <span id="kpi-avg-expense" class="text-slate-500">เฉลี่ย: -</span>
+                    <span id="kpi-avg-expense" class="text-slate-500 truncate">เฉลี่ย: -</span>
                 </div>
             </div>
 
             <!-- Card 4: กระแสเงินสดสุทธิ -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:border-primary-500/40 transition-all">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">กระแสเงินสดสุทธิ (Net)</span>
-                    <div id="kpi-net-badge-icon" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center text-sm shadow-sm">
-                        <i class="fa-solid fa-scale-balanced"></i>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-5 relative overflow-hidden group hover:border-primary-500/40 transition-all flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">สุทธิ (Net)</span>
+                        <div id="kpi-net-badge-icon" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight truncate" id="kpi-net">0.00</span>
+                        <span class="text-[10px] sm:text-xs text-slate-500 font-medium" id="kpi-net-unit">บาท</span>
                     </div>
                 </div>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="kpi-net">0.00</span>
-                    <span class="text-xs text-slate-500 font-medium" id="kpi-net-unit">บาท</span>
-                </div>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span id="kpi-net-status" class="font-medium">-</span>
-                    <span id="kpi-net-ratio" class="text-slate-400">อัตราส่วน -</span>
+                <div class="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs">
+                    <span id="kpi-net-status" class="font-medium truncate">-</span>
+                    <span id="kpi-net-ratio" class="text-slate-400 whitespace-nowrap">อัตราส่วน -</span>
                 </div>
             </div>
         </div>
@@ -350,11 +401,14 @@
                 <div class="flex items-center gap-2 no-print flex-wrap">
                     <!-- Chart Size Switcher -->
                     <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs shadow-xs">
-                        <button id="size-btn-huge" onclick="setChartSize('huge')" class="px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer" title="ความสูงขนาดใหญ่พิเศษ (72% ของหน้าจอ ไม่ต้องกดเต็มจอ)">
-                            <i class="fa-solid fa-arrows-up-down text-[10px] mr-1"></i> กราฟขยายใหญ่ (อัตโนมัติ)
+                        <button id="size-btn-small" onclick="setChartSize('small')" class="px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer" title="ความสูงขนาดเล็ก กะทัดรัด (ค่าเริ่มต้น)">
+                            <i class="fa-solid fa-compress text-[10px] mr-1"></i> เล็ก (เริ่มต้น)
                         </button>
-                        <button id="size-btn-normal" onclick="setChartSize('normal')" class="px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer" title="ความสูงขนาดกะทัดรัด (520px)">
-                            <i class="fa-solid fa-compress text-[10px] mr-1"></i> มาตรฐาน
+                        <button id="size-btn-normal" onclick="setChartSize('normal')" class="px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer" title="ความสูงขนาดมาตรฐาน (กลาง)">
+                            <i class="fa-solid fa-table-cells-large text-[10px] mr-1"></i> กลาง
+                        </button>
+                        <button id="size-btn-huge" onclick="setChartSize('huge')" class="px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer" title="ความสูงขนาดใหญ่พิเศษ">
+                            <i class="fa-solid fa-arrows-up-down text-[10px] mr-1"></i> ใหญ่
                         </button>
                     </div>
 
@@ -378,26 +432,26 @@
                             <i class="fa-solid fa-sliders text-primary-600 text-xs"></i> เลือกแสดงในกราฟ:
                         </span>
 
-                        <!-- Income Button -->
-                        <button id="toggle-income-btn" onclick="toggleDataset('income')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
-                            <i id="toggle-income-icon" class="fa-solid fa-check text-[10px]"></i>
+                        <!-- Income Button (ซ่อนเป็นค่าเริ่มต้น กดเพื่อแสดง) -->
+                        <button id="toggle-income-btn" onclick="toggleDataset('income')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60">
+                            <i id="toggle-income-icon" class="fa-solid fa-plus text-[10px]"></i>
                             <span>รายรับ</span>
                         </button>
 
-                        <!-- Expense Button -->
-                        <button id="toggle-expense-btn" onclick="toggleDataset('expense')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-rose-100 text-rose-800 border border-rose-300 shadow-sm">
+                        <!-- Expense Button (แสดงทุกครั้ง) -->
+                        <button id="toggle-expense-btn" onclick="toggleDataset('expense')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-rose-100 text-rose-800 border border-rose-300 shadow-sm">
                             <i id="toggle-expense-icon" class="fa-solid fa-check text-[10px]"></i>
                             <span>รายจ่าย</span>
                         </button>
 
-                        <!-- Balance Button -->
-                        <button id="toggle-balance-btn" onclick="toggleDataset('balance')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-blue-100 text-blue-800 border border-blue-300 shadow-sm">
+                        <!-- Balance Button (แสดงทุกครั้ง) -->
+                        <button id="toggle-balance-btn" onclick="toggleDataset('balance')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-blue-100 text-blue-800 border border-blue-300 shadow-sm">
                             <i id="toggle-balance-icon" class="fa-solid fa-check text-[10px]"></i>
                             <span>เงินฝากคงเหลือ</span>
                         </button>
 
-                        <!-- Net Cash Flow Button -->
-                        <button id="toggle-net-btn" onclick="toggleDataset('net')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-500 border border-slate-200">
+                        <!-- Net Cash Flow Button (ซ่อนเป็นค่าเริ่มต้น กดเพื่อแสดง) -->
+                        <button id="toggle-net-btn" onclick="toggleDataset('net')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-slate-100 text-slate-400 border border-slate-200 opacity-60">
                             <i id="toggle-net-icon" class="fa-solid fa-plus text-[10px]"></i>
                             <span>สุทธิ (Net)</span>
                         </button>
@@ -463,8 +517,8 @@
 
             </div>
 
-            <!-- Canvas container with expanded full-width & full-height space (72vh default) -->
-            <div id="chart-canvas-container" class="relative h-[72vh] min-h-[620px] max-h-[880px] w-full flex-1 transition-all duration-200">
+            <!-- Canvas container with responsive height scale (ขนาดเล็กเริ่มต้น: 250px-340px) -->
+            <div id="chart-canvas-container" class="relative h-[250px] sm:h-[300px] lg:h-[340px] min-h-[220px] max-h-[380px] w-full flex-1 transition-all duration-200">
                 <canvas id="mainChart"></canvas>
             </div>
         </div>
@@ -518,12 +572,15 @@
             <!-- Modal Header -->
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <div id="modal-icon-container" class="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center text-sm">
+                        <i id="modal-header-icon" class="fa-solid fa-file-invoice-dollar"></i>
                     </div>
-                    <h3 class="font-bold text-slate-800 text-base" id="modal-title">บันทึกยอดประจำวัน</h3>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base" id="modal-title">บันทึกยอดประจำวัน</h3>
+                        <p class="text-[11px] text-slate-500" id="modal-subtitle">บันทึกหรือแก้ไขยอดเงินในรายการที่ต้องการ</p>
+                    </div>
                 </div>
-                <button onclick="closeRecordModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                <button onclick="closeRecordModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -532,12 +589,30 @@
             <form id="recordForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="entry-id" value="">
 
+                <!-- Mode Badge Alert -->
+                <div id="record-mode-badge" class="p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between bg-slate-100 text-slate-700 border border-slate-200">
+                    <span id="record-mode-text" class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-primary-600"></i> โหมด: บันทึกยอดประจำวันใหม่
+                    </span>
+                    <span id="record-mode-tag" class="text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 font-bold">ใหม่</span>
+                </div>
+
+                <!-- Quick Select Dropdown for Existing Records -->
+                <div id="quick-edit-container" class="p-2.5 bg-indigo-50/70 border border-indigo-200/80 rounded-xl space-y-1">
+                    <label class="block text-[11px] font-bold text-indigo-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> เลือกรายการที่เคยบันทึกเพื่อแก้ไขยอดด่วน:
+                    </label>
+                    <select id="entry-quick-select" onchange="handleQuickSelectChange(this.value)" class="w-full px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- หรือเลือกวันที่ด้านล่างเพื่อบันทึกวันใหม่ --</option>
+                    </select>
+                </div>
+
                 <!-- วันที่ -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่ (Date) <span class="text-rose-500">*</span></label>
                     <div class="flex gap-2">
-                        <input type="date" id="entry-date" required onchange="calculateClosingBalance()" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium">
-                        <button type="button" onclick="setTodayDate()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">วันนี้</button>
+                        <input type="date" id="entry-date" required onchange="handleEntryDateChange()" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium">
+                        <button type="button" onclick="setTodayDate()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer">วันนี้</button>
                     </div>
                 </div>
 
@@ -571,7 +646,9 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-semibold text-slate-700">เงินฝากคงเหลือสิ้นวัน (บาท) <span class="text-rose-500">*</span></label>
-                        <span class="text-[11px] text-slate-400">(คำนวณอัตโนมัติ หรือแก้ไขได้)</span>
+                        <button type="button" onclick="calculateClosingBalance(true)" class="text-[11px] text-primary-600 hover:text-primary-800 font-semibold underline cursor-pointer" title="คำนวณตามสูตร (ยอดยกมา + รับ - จ่าย)">
+                            คำนวณใหม่อัตโนมัติ
+                        </button>
                     </div>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
@@ -587,14 +664,152 @@
 
                 <!-- Modal Actions -->
                 <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-                    <button type="button" onclick="closeRecordModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors">
+                    <button type="button" onclick="closeRecordModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors cursor-pointer">
                         ยกเลิก
                     </button>
-                    <button type="submit" class="px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-lg text-sm font-semibold transition-all shadow-sm">
-                        <i class="fa-solid fa-check mr-1.5"></i> บันทึกข้อมูล
+                    <button type="submit" id="record-form-submit-btn" class="px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i id="record-submit-icon" class="fa-solid fa-arrow-right"></i>
+                        <span id="record-submit-text">ตรวจสอบรายการก่อนบันทึก</span>
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Modal: Pop-up ยืนยันรายการก่อนดำเนินการ (Confirmation Pop-up) -->
+    <!-- ========================================== -->
+    <div id="confirmActionModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden no-print transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg mx-4 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div id="confirm-modal-header" class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-primary-50">
+                <div class="flex items-center gap-3">
+                    <div id="confirm-modal-icon-container" class="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center text-lg shadow-xs">
+                        <i id="confirm-modal-icon" class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base" id="confirm-modal-title">ยืนยันการดำเนินการ</h3>
+                        <p class="text-xs text-slate-500 mt-0.5" id="confirm-modal-subtitle">โปรดตรวจสอบรายละเอียดและยอดเงินก่อนดำเนินรายการ</p>
+                    </div>
+                </div>
+                <button onclick="closeConfirmModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content / Item Details Preview -->
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <!-- Status & Date Tag -->
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/90">
+                    <div class="flex items-center gap-2">
+                        <span id="confirm-type-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-primary-100 text-primary-800">
+                            แก้ไขยอดเดิม
+                        </span>
+                        <span id="confirm-date-display" class="font-semibold text-slate-800 text-sm">
+                            -
+                        </span>
+                    </div>
+                    <span id="confirm-source-badge" class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-database text-[10px]"></i> <span id="confirm-source-text">ระบบ</span>
+                    </span>
+                </div>
+
+                <!-- Comparison Container (shows for Edit) -->
+                <div id="confirm-edit-comparison-container" class="hidden">
+                    <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-right-arrow-left text-primary-600 text-xs"></i> ตารางเปรียบเทียบยอดเดิม vs ยอดใหม่ที่แก้ไข:
+                    </h4>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                        <table class="w-full">
+                            <thead class="bg-slate-100 border-b border-slate-200 text-slate-600">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-semibold">รายการ</th>
+                                    <th class="px-3 py-2 text-right font-semibold">ยอดเดิม</th>
+                                    <th class="px-3 py-2 text-right font-semibold text-primary-700 bg-primary-50/50">ยอดใหม่</th>
+                                    <th class="px-3 py-2 text-right font-semibold">ผลต่าง</th>
+                                </tr>
+                            </thead>
+                            <tbody id="confirm-comparison-tbody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Single Item Details Card (shows for New entry or Delete) -->
+                <div id="confirm-single-details-container" class="hidden space-y-2.5">
+                    <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-receipt text-primary-600 text-xs"></i> รายละเอียดข้อมูล:
+                    </h4>
+                    <div class="bg-slate-50/80 rounded-xl border border-slate-200 p-3.5 space-y-2 text-xs">
+                        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                            <span class="text-slate-500">ยอดยกมาคงเหลือ:</span>
+                            <span id="confirm-detail-prev" class="font-semibold text-slate-800">฿0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                            <span class="text-emerald-700 font-medium">รายรับประจำวัน:</span>
+                            <span id="confirm-detail-income" class="font-bold text-emerald-600">฿0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                            <span class="text-rose-700 font-medium">รายจ่ายประจำวัน:</span>
+                            <span id="confirm-detail-expense" class="font-bold text-rose-600">฿0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                            <span class="text-slate-600 font-medium">รับ/จ่าย สุทธิ (Net):</span>
+                            <span id="confirm-detail-net" class="font-bold text-slate-800">฿0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-1.5 bg-blue-50/70 -mx-2 px-2 rounded-lg border border-blue-100">
+                            <span class="text-blue-900 font-bold">เงินฝากคงเหลือสิ้นวัน:</span>
+                            <span id="confirm-detail-balance" class="font-extrabold text-blue-700 text-sm">฿0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Note preview -->
+                <div id="confirm-note-container" class="bg-amber-50/60 rounded-xl border border-amber-200/70 p-3 text-xs">
+                    <span class="font-semibold text-amber-900 block mb-0.5 flex items-center gap-1">
+                        <i class="fa-solid fa-note-sticky text-amber-600"></i> หมายเหตุ:
+                    </span>
+                    <p id="confirm-detail-note" class="text-slate-700 whitespace-pre-wrap">-</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="closeConfirmModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> ย้อนกลับไปแก้ไข
+                </button>
+                <button type="button" id="confirm-action-submit-btn" onclick="executeConfirmedAction()" class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm shadow-primary-500/25 flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-check"></i>
+                    <span id="confirm-submit-btn-text">ยืนยันดำเนินการ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Modal: Pop-up แจ้งเสร็จสิ้นการดำเนินการ (Completion Pop-up) -->
+    <!-- ========================================== -->
+    <div id="actionSuccessModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-xs hidden no-print transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 p-6 text-center transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            <!-- Animated Success Icon -->
+            <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-2xl shadow-md shadow-emerald-500/20 mb-3.5">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <h3 class="text-lg font-bold text-slate-900 mb-1" id="success-modal-title">ดำเนินการเสร็จสิ้นเรียบร้อยแล้ว!</h3>
+            <p class="text-xs text-slate-500 mb-4" id="success-modal-subtitle">ข้อมูลได้รับการประมวลผลและอัปเดตเข้าระบบทันที</p>
+
+            <!-- Details Card -->
+            <div id="success-modal-details-card" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-left mb-4 space-y-1.5">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- OK Button -->
+            <button onclick="closeSuccessModal()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm shadow-emerald-500/30 cursor-pointer">
+                ตกลง (<span id="success-auto-close-countdown">3</span>)
+            </button>
         </div>
     </div>
 
@@ -758,6 +973,99 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- Modal: ติดตั้งแอปบนมือถือ (Mobile App Install Guide & QR) -->
+    <!-- ========================================== -->
+    <div id="mobileInstallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden no-print transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg mx-4 overflow-hidden transform transition-all max-h-[92vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-emerald-50/90 to-teal-50/90">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm shadow-md shadow-emerald-500/20">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">ติดตั้งแอปลงบนมือถือ (Web App PWA)</h3>
+                        <p class="text-xs text-slate-500">ใช้งานเหมือนแอปจริงเต็มจอ ทั้งบน iPhone และ Android</p>
+                    </div>
+                </div>
+                <button onclick="closeMobileInstallModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <!-- Native Install Button if triggered by browser -->
+                <div id="pwa-prompt-container" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 text-center">
+                    <p class="text-xs text-emerald-800 font-semibold mb-2">อุปกรณ์ของคุณพร้อมติดตั้งแอปได้ทันทีด้วย 1 คลิก!</p>
+                    <button onclick="triggerPwaInstall()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer">
+                        <i class="fa-solid fa-download mr-1.5"></i> ติดตั้งแอป Cash Flow ตอนนี้
+                    </button>
+                </div>
+
+                <!-- QR Code for Quick Mobile Open -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-center flex flex-col items-center">
+                    <span class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-qrcode text-emerald-600"></i> สแกน QR Code ด้วยกล้องมือถือ เพื่อเปิดบนมือถือทันที:
+                    </span>
+                    <div class="bg-white p-2 rounded-xl shadow-xs border border-slate-200 inline-block">
+                        <img id="install-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https%3A%2F%2Fcashflowdashboard-sandy.vercel.app" alt="Scan QR Code" class="w-36 h-36">
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1.5">ใช้แอปกล้องใน iPhone หรือแอป LINE สแกนเปิดได้ทันที</p>
+                </div>
+
+                <!-- Steps for iPhone & Android -->
+                <div class="space-y-3">
+                    <!-- iOS iPhone Steps -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs">
+                        <div class="flex items-center gap-2 font-bold text-slate-800 text-xs mb-2">
+                            <i class="fa-brands fa-apple text-base text-slate-900"></i> สำหรับ iPhone / iPad (Safari)
+                        </div>
+                        <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1 pl-1 leading-relaxed">
+                            <li>เปิดลิงก์ในแอป <b>Safari</b></li>
+                            <li>กดปุ่ม <b>แชร์ (Share)</b> <i class="fa-solid fa-arrow-up-from-bracket text-blue-600"></i> ที่แถบด้านล่าง</li>
+                            <li>เลื่อนลงแล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</b> <i class="fa-regular fa-square-plus text-slate-700"></i></li>
+                            <li>กดปุ่ม <b>"เพิ่ม" (Add)</b> ที่มุมขวาบน</li>
+                        </ol>
+                    </div>
+
+                    <!-- Android Steps -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs">
+                        <div class="flex items-center gap-2 font-bold text-slate-800 text-xs mb-2">
+                            <i class="fa-brands fa-android text-base text-emerald-600"></i> สำหรับ Android (Chrome / Samsung)
+                        </div>
+                        <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1 pl-1 leading-relaxed">
+                            <li>เปิดลิงก์ในแอป <b>Google Chrome</b></li>
+                            <li>กดปุ่มเมนู <b>3 จุด (⋮)</b> ที่มุมขวาบน</li>
+                            <li>เลือก <b>"ติดตั้งแอป" (Install App)</b> หรือ <b>"เพิ่มลงในหน้าจอหลัก"</b></li>
+                            <li>กด <b>"ติดตั้ง"</b> จะได้ไอคอนแอปบนหน้าจอมือถือทันที</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- PWA Features Checklist -->
+                <div class="bg-emerald-50/60 rounded-xl p-3 border border-emerald-100 text-xs text-slate-600">
+                    <span class="font-bold text-emerald-800 flex items-center gap-1.5 mb-1 text-xs">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> ข้อดีของการติดตั้งแบบ Web App (PWA):
+                    </span>
+                    <ul class="space-y-0.5 pl-1 text-[11px] list-disc list-inside">
+                        <li>เปิดเต็มจอ 100% ไม่มีแถบ URL เหมือนแอปแท้จาก App Store / Play Store</li>
+                        <li>ข้อมูลซิงก์สดจาก Firebase อัตโนมัติทุกครั้งที่เปิดใช้งาน</li>
+                        <li>ไม่เปลืองพื้นที่ความจุเครื่อง (ขนาดเล็กไม่ถึง 1 MB) และอัปเดตเองอัตโนมัติ</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+                <button onclick="closeMobileInstallModal()" class="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- Logic & Dashboard Scripts                   -->
     <!-- ========================================== -->
     <script>
@@ -860,6 +1168,71 @@
             window.open(testUrl, '_blank');
         }
 
+        // ==========================================
+        // PWA Mobile App Installation & Modal
+        // ==========================================
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const promptBox = document.getElementById('pwa-prompt-container');
+            if (promptBox) promptBox.classList.remove('hidden');
+        });
+
+        function triggerPwaInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    deferredPrompt = null;
+                    closeMobileInstallModal();
+                });
+            } else {
+                alert('โปรดทำตามขั้นตอนการติดตั้งด้านล่างสำหรับระบบมือถือของคุณได้เลยครับ');
+            }
+        }
+
+        function openMobileInstallModal() {
+            const targetUrl = isReadOnly 
+                ? 'https://cashflowdashboard-sandy.vercel.app/?mode=view'
+                : 'https://cashflowdashboard-sandy.vercel.app';
+            const qrImg = document.getElementById('install-qr-img');
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(targetUrl)}`;
+            }
+            const modal = document.getElementById('mobileInstallModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeMobileInstallModal() {
+            const modal = document.getElementById('mobileInstallModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('SW registration note:', err);
+                });
+            });
+        }
+
+        function toggleMobileMoreMenu() {
+            const menu = document.getElementById('mobile-more-menu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+
+        // Close mobile more dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('nav-more-dropdown-container');
+            const menu = document.getElementById('mobile-more-menu');
+            if (container && menu && !container.contains(e.target) && !menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+            }
+        });
+
         function applyReadOnlyMode() {
             if (!isReadOnly) return;
 
@@ -888,6 +1261,13 @@
 
             const resetBtn = document.getElementById('nav-reset-btn');
             if (resetBtn) resetBtn.style.display = 'none';
+
+            // Also hide mutation buttons in Mobile More Menu
+            const mobFbBtn = document.getElementById('mobile-menu-fb-btn');
+            if (mobFbBtn) mobFbBtn.style.display = 'none';
+
+            const mobResetBtn = document.getElementById('mobile-menu-reset-btn');
+            if (mobResetBtn) mobResetBtn.style.display = 'none';
         }
 
         // Firebase State
@@ -896,12 +1276,12 @@
         let firebaseRef = null;
         let isFirebaseConnected = false;
 
-        // Chart Interactive Display Config
+        // Chart Interactive Display Config (เริ่มต้น: แสดงเฉพาะรายจ่าย และเงินฝากคงเหลือทุกครั้ง)
         let chartConfig = {
-            showIncome: true,
-            showExpense: true,
-            showBalance: true,
-            showNet: false,
+            showIncome: false,  // ซ่อนเป็นค่าเริ่มต้น กดเพื่อแสดง
+            showExpense: true,  // แสดงทุกครั้ง
+            showBalance: true,  // แสดงทุกครั้ง
+            showNet: false,     // ซ่อนเป็นค่าเริ่มต้น กดเพื่อแสดง
             showDataLabels: true, // แสดงตัวเลขบนจุดตัดกราฟ
             chartType: 'line',  // 'line' (หลัก) | 'combo' | 'bar'
             dailyRange: 'all',  // 'all' | 'last7' | 'last14' | 'last30' | 'month' | 'custom'
@@ -1407,6 +1787,7 @@
             }
 
             populateMonthDropdown();
+            populateQuickEditDropdown();
             renderDashboard();
         }
 
@@ -1575,8 +1956,8 @@
             }
         }
 
-        // Chart Height / Size Mode (huge by default: 72vh)
-        let currentChartSize = localStorage.getItem('cashflow_chart_size') || 'huge';
+        // Chart Height / Size Mode (small by default: กะทัดรัด 250px-340px)
+        let currentChartSize = localStorage.getItem('cashflow_chart_size') || 'small';
 
         function initChartSize() {
             setChartSize(currentChartSize, false);
@@ -1585,28 +1966,34 @@
         function setChartSize(size, triggerResize = true) {
             currentChartSize = size;
             const container = document.getElementById('chart-canvas-container');
-            const btnHuge = document.getElementById('size-btn-huge');
+            const btnSmall = document.getElementById('size-btn-small');
             const btnNormal = document.getElementById('size-btn-normal');
+            const btnHuge = document.getElementById('size-btn-huge');
             if (!container) return;
 
-            if (size === 'huge') {
-                container.className = "relative h-[72vh] min-h-[620px] max-h-[880px] w-full flex-1 transition-all duration-200";
-                if (btnHuge) {
-                    btnHuge.className = "px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer";
+            [
+                { btn: btnSmall, val: 'small' },
+                { btn: btnNormal, val: 'normal' },
+                { btn: btnHuge, val: 'huge' }
+            ].forEach(item => {
+                if (item.btn) {
+                    if (item.val === size) {
+                        item.btn.className = "px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer";
+                    } else {
+                        item.btn.className = "px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
+                    }
                 }
-                if (btnNormal) {
-                    btnNormal.className = "px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
-                }
-                try { localStorage.setItem('cashflow_chart_size', 'huge'); } catch(e) {}
-            } else {
-                container.className = "relative h-[520px] w-full flex-1 transition-all duration-200";
-                if (btnHuge) {
-                    btnHuge.className = "px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
-                }
-                if (btnNormal) {
-                    btnNormal.className = "px-2.5 py-1 rounded-md font-semibold text-white bg-primary-600 shadow-xs transition-all cursor-pointer";
-                }
+            });
+
+            if (size === 'small') {
+                container.className = "relative h-[250px] sm:h-[300px] lg:h-[340px] min-h-[220px] max-h-[380px] w-full flex-1 transition-all duration-200";
+                try { localStorage.setItem('cashflow_chart_size', 'small'); } catch(e) {}
+            } else if (size === 'normal') {
+                container.className = "relative h-[320px] sm:h-[400px] lg:h-[480px] min-h-[280px] max-h-[540px] w-full flex-1 transition-all duration-200";
                 try { localStorage.setItem('cashflow_chart_size', 'normal'); } catch(e) {}
+            } else if (size === 'huge') {
+                container.className = "relative h-[380px] sm:h-[480px] lg:h-[70vh] min-h-[340px] max-h-[820px] w-full flex-1 transition-all duration-200";
+                try { localStorage.setItem('cashflow_chart_size', 'huge'); } catch(e) {}
             }
 
             if (triggerResize && mainChart) {
@@ -1912,6 +2299,10 @@
             document.getElementById('chart-main-title').innerText = `กราฟแนวโน้มกระแสเงินสด (${modeText})`;
             document.getElementById('chart-main-subtitle').innerText = `เปรียบเทียบตามตัวเลือกที่กำหนด (หน่วย: ${isMB ? 'ล้านบาท' : 'บาท'})`;
 
+            // Device Breakpoint Detection for Responsive Charting
+            const isMobile = window.innerWidth < 640;
+            const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+
             // Prepare Dynamic Datasets
             const datasets = [];
             const isLineType = chartConfig.chartType === 'line';
@@ -1926,12 +2317,12 @@
                     data: balanceData,
                     borderColor: '#2563eb',
                     backgroundColor: isBarType ? '#3b82f6' : 'rgba(37, 99, 235, 0.08)',
-                    borderWidth: 3.5,
+                    borderWidth: isMobile ? 2.5 : 3.5,
                     pointBackgroundColor: '#2563eb',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: items.length > 30 ? 3.5 : 5.5,
-                    pointHoverRadius: 8.5,
+                    pointBorderWidth: isMobile ? 1.5 : 2,
+                    pointRadius: items.length > 30 ? (isMobile ? 2.5 : 3.5) : (isMobile ? 4 : 5.5),
+                    pointHoverRadius: isMobile ? 6 : 8.5,
                     fill: !isBarType,
                     yAxisID: hasDualY ? 'y1' : 'y',
                     tension: 0.28,
@@ -1940,14 +2331,14 @@
                         display: chartConfig.showDataLabels,
                         align: 'top',
                         anchor: 'center',
-                        offset: 8,
+                        offset: isMobile ? 5 : 8,
                         color: '#1e40af',
                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
                         borderColor: '#93c5fd',
-                        borderWidth: 1.5,
+                        borderWidth: isMobile ? 1 : 1.5,
                         borderRadius: 6,
-                        padding: { top: 3, bottom: 3, left: 7, right: 7 },
-                        font: { family: 'Prompt', size: 11, weight: '700' },
+                        padding: isMobile ? { top: 1.5, bottom: 1.5, left: 4, right: 4 } : { top: 3, bottom: 3, left: 7, right: 7 },
+                        font: { family: 'Prompt', size: isMobile ? 8.5 : 11, weight: '700' },
                         formatter: (val) => formatDataPointLabel(val)
                     }
                 });
@@ -1961,12 +2352,12 @@
                     data: incomeData,
                     borderColor: '#16a34a',
                     backgroundColor: isLineType ? 'rgba(22, 163, 74, 0.04)' : '#22c55e',
-                    borderWidth: 3,
+                    borderWidth: isMobile ? 2 : 3,
                     pointBackgroundColor: '#16a34a',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: items.length > 30 ? 3 : 5,
-                    pointHoverRadius: 8,
+                    pointBorderWidth: isMobile ? 1.5 : 2,
+                    pointRadius: items.length > 30 ? (isMobile ? 2 : 3) : (isMobile ? 3.5 : 5),
+                    pointHoverRadius: isMobile ? 5.5 : 8,
                     borderRadius: 4,
                     fill: false,
                     yAxisID: 'y',
@@ -1976,14 +2367,14 @@
                         display: chartConfig.showDataLabels,
                         align: isLineType ? 'top' : 'center',
                         anchor: isLineType ? 'center' : 'end',
-                        offset: 8,
+                        offset: isMobile ? 5 : 8,
                         color: '#15803d',
                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
                         borderColor: '#86efac',
-                        borderWidth: 1.5,
+                        borderWidth: isMobile ? 1 : 1.5,
                         borderRadius: 6,
-                        padding: { top: 2.5, bottom: 2.5, left: 6, right: 6 },
-                        font: { family: 'Prompt', size: 10.5, weight: '700' },
+                        padding: isMobile ? { top: 1.5, bottom: 1.5, left: 3.5, right: 3.5 } : { top: 2.5, bottom: 2.5, left: 6, right: 6 },
+                        font: { family: 'Prompt', size: isMobile ? 8.5 : 10.5, weight: '700' },
                         formatter: (val) => formatDataPointLabel(val)
                     }
                 });
@@ -1997,12 +2388,12 @@
                     data: expenseData,
                     borderColor: '#dc2626',
                     backgroundColor: isLineType ? 'rgba(220, 38, 38, 0.04)' : '#ef4444',
-                    borderWidth: 3,
+                    borderWidth: isMobile ? 2 : 3,
                     pointBackgroundColor: '#dc2626',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: items.length > 30 ? 3 : 5,
-                    pointHoverRadius: 8,
+                    pointBorderWidth: isMobile ? 1.5 : 2,
+                    pointRadius: items.length > 30 ? (isMobile ? 2 : 3) : (isMobile ? 3.5 : 5),
+                    pointHoverRadius: isMobile ? 5.5 : 8,
                     borderRadius: 4,
                     fill: false,
                     yAxisID: 'y',
@@ -2012,14 +2403,14 @@
                         display: chartConfig.showDataLabels,
                         align: isLineType ? 'bottom' : 'center',
                         anchor: isLineType ? 'center' : 'start',
-                        offset: 8,
+                        offset: isMobile ? 5 : 8,
                         color: '#b91c1c',
                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
                         borderColor: '#fca5a5',
-                        borderWidth: 1.5,
+                        borderWidth: isMobile ? 1 : 1.5,
                         borderRadius: 6,
-                        padding: { top: 2.5, bottom: 2.5, left: 6, right: 6 },
-                        font: { family: 'Prompt', size: 10.5, weight: '700' },
+                        padding: isMobile ? { top: 1.5, bottom: 1.5, left: 3.5, right: 3.5 } : { top: 2.5, bottom: 2.5, left: 6, right: 6 },
+                        font: { family: 'Prompt', size: isMobile ? 8.5 : 10.5, weight: '700' },
                         formatter: (val) => formatDataPointLabel(val)
                     }
                 });
@@ -2033,12 +2424,12 @@
                     data: netData,
                     borderColor: '#9333ea',
                     backgroundColor: isLineType ? 'rgba(147, 51, 234, 0.05)' : '#a855f7',
-                    borderWidth: 2.5,
+                    borderWidth: isMobile ? 2 : 2.5,
                     borderDash: isLineType ? [5, 4] : [],
                     pointBackgroundColor: '#9333ea',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 1.5,
-                    pointRadius: items.length > 30 ? 2.5 : 4.5,
+                    pointBorderWidth: isMobile ? 1 : 1.5,
+                    pointRadius: items.length > 30 ? (isMobile ? 1.8 : 2.5) : (isMobile ? 3 : 4.5),
                     borderRadius: 4,
                     fill: false,
                     yAxisID: 'y',
@@ -2048,14 +2439,14 @@
                         display: chartConfig.showDataLabels,
                         align: 'bottom',
                         anchor: 'center',
-                        offset: 8,
+                        offset: isMobile ? 5 : 8,
                         color: '#7e22ce',
                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
                         borderColor: '#d8b4fe',
-                        borderWidth: 1.5,
+                        borderWidth: isMobile ? 1 : 1.5,
                         borderRadius: 6,
-                        padding: { top: 2.5, bottom: 2.5, left: 6, right: 6 },
-                        font: { family: 'Prompt', size: 10.5, weight: '700' },
+                        padding: isMobile ? { top: 1.5, bottom: 1.5, left: 3.5, right: 3.5 } : { top: 2.5, bottom: 2.5, left: 6, right: 6 },
+                        font: { family: 'Prompt', size: isMobile ? 8.5 : 10.5, weight: '700' },
                         formatter: (val) => (val > 0 ? '+' : '') + formatDataPointLabel(val)
                     }
                 });
@@ -2081,10 +2472,10 @@
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 32,
-                            bottom: 12,
-                            left: 10,
-                            right: 15
+                            top: isMobile ? 20 : 32,
+                            bottom: isMobile ? 8 : 12,
+                            left: isMobile ? 4 : 10,
+                            right: isMobile ? 6 : 15
                         }
                     },
                     interaction: {
@@ -2097,9 +2488,9 @@
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                            titleFont: { family: 'Prompt', size: 13, weight: 'bold' },
-                            bodyFont: { family: 'Prompt', size: 12 },
-                            padding: 12,
+                            titleFont: { family: 'Prompt', size: isMobile ? 11 : 13, weight: 'bold' },
+                            bodyFont: { family: 'Prompt', size: isMobile ? 10.5 : 12 },
+                            padding: isMobile ? 8 : 12,
                             cornerRadius: 8,
                             callbacks: {
                                 label: function(context) {
@@ -2117,45 +2508,57 @@
                         x: {
                             grid: { display: false },
                             ticks: {
-                                font: { family: 'Prompt', size: 11 },
+                                font: { family: 'Prompt', size: isMobile ? 9 : 11 },
                                 maxRotation: 45,
                                 autoSkip: true,
-                                maxTicksLimit: 15
+                                maxTicksLimit: isMobile ? 6 : (isTablet ? 10 : 15)
                             }
                         },
                         y: {
                             type: 'linear',
                             position: 'left',
-                            grace: '14%',
+                            beginAtZero: true,
+                            min: (chartConfig.showNet && netData.some(v => v < 0)) ? undefined : 0,
+                            grace: '10%',
                             title: {
                                 display: true,
-                                text: `${hasDualY ? 'รายรับ / รายจ่าย' : 'จำนวนเงิน'} (${isMB ? 'ล้านบาท' : 'บาท'})`,
-                                font: { family: 'Prompt', size: 11 }
+                                text: isMobile ? `ยอด (${isMB ? 'ลบ.' : '฿'})` : `${hasDualY ? 'รายรับ / รายจ่าย' : 'จำนวนเงิน'} (${isMB ? 'ล้านบาท' : 'บาท'})`,
+                                font: { family: 'Prompt', size: isMobile ? 9.5 : 11 }
                             },
                             grid: {
                                 color: '#f1f5f9'
                             },
                             ticks: {
-                                font: { family: 'Prompt', size: 11 }
+                                beginAtZero: true,
+                                font: { family: 'Prompt', size: isMobile ? 9 : 11 },
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('th-TH', { maximumFractionDigits: 1 }).format(value);
+                                }
                             }
                         },
                         y1: {
                             type: 'linear',
                             display: hasDualY,
                             position: 'right',
-                            grace: '14%',
+                            beginAtZero: true,
+                            min: 0,
+                            grace: '10%',
                             title: {
                                 display: hasDualY,
-                                text: `เงินฝากคงเหลือ (${isMB ? 'ล้านบาท' : 'บาท'})`,
-                                font: { family: 'Prompt', size: 11 },
+                                text: isMobile ? `คงเหลือ (${isMB ? 'ลบ.' : '฿'})` : `เงินฝากคงเหลือ (${isMB ? 'ล้านบาท' : 'บาท'})`,
+                                font: { family: 'Prompt', size: isMobile ? 9.5 : 11 },
                                 color: '#2563eb'
                             },
                             grid: {
                                 drawOnChartArea: false
                             },
                             ticks: {
-                                font: { family: 'Prompt', size: 11 },
-                                color: '#2563eb'
+                                beginAtZero: true,
+                                font: { family: 'Prompt', size: isMobile ? 9 : 11 },
+                                color: '#2563eb',
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('th-TH', { maximumFractionDigits: 1 }).format(value);
+                                }
                             }
                         }
                     }
@@ -2244,13 +2647,14 @@
                     const actionCell = isReadOnly ? '' : `
                         <td class="px-4 py-3.5 text-center whitespace-nowrap no-print">
                             <div class="flex items-center justify-center gap-1.5">
-                                <button onclick="focusDay('${r.date}')" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="ซูมดูกราฟช่วงวันนี้">
+                                <button onclick="focusDay('${r.date}')" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer" title="ซูมดูกราฟช่วงวันนี้">
                                     <i class="fa-solid fa-crosshairs text-xs"></i>
                                 </button>
-                                <button onclick="editRecord('${r.date}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" title="แก้ไข">
-                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                <button onclick="editRecord('${r.date}')" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 hover:text-primary-800 rounded-lg transition-colors border border-primary-200/80 shadow-2xs cursor-pointer" title="คลิกเพื่อแก้ไขยอดรายการนี้">
+                                    <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                    <span>แก้ไขยอด</span>
                                 </button>
-                                <button onclick="deleteRecord('${r.id}', '${r.date}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="ลบ">
+                                <button onclick="deleteRecord('${r.id}', '${r.date}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer" title="ลบรายการนี้">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>
@@ -2258,7 +2662,11 @@
                     `;
 
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
+                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100 " + (isReadOnly ? "" : "cursor-pointer");
+                    tr.title = isReadOnly ? "" : "ดับเบิลคลิกเพื่อแก้ไขยอดรายการนี้";
+                    if (!isReadOnly) {
+                        tr.ondblclick = () => editRecord(r.date);
+                    }
                     tr.innerHTML = `
                         <td class="px-4 py-3.5 font-medium text-slate-900 whitespace-nowrap flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-primary-500"></span>
@@ -2408,6 +2816,120 @@
             renderTable(filtered);
         }
 
+        // State for Editing, Confirmation, and Completion Pop-ups
+        let currentEditingOriginalRecord = null;
+        let pendingActionData = null;
+        let successCountdownInterval = null;
+
+        // Populate Quick Edit Dropdown with existing daily records
+        function populateQuickEditDropdown(selectedDate = '') {
+            const selectEl = document.getElementById('entry-quick-select');
+            if (!selectEl) return;
+            selectEl.innerHTML = '<option value="">-- หรือเลือกวันที่ด้านล่างเพื่อบันทึกวันใหม่ --</option>';
+
+            const daily = summaryData.daily || [];
+            // Sort by date descending (latest first)
+            const sorted = [...daily].sort((a, b) => b.date.localeCompare(a.date));
+            sorted.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.date;
+                opt.innerText = `${formatThaiDateStr(r.date)} (จ่าย: ฿${formatExactNumber(r.expense)} | คงเหลือ: ฿${formatExactNumber(r.balance)})`;
+                if (r.date === selectedDate) opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function handleQuickSelectChange(date) {
+            if (date) {
+                openRecordModal(date);
+            } else {
+                openRecordModal(null);
+            }
+        }
+
+        function updateRecordModalModeUI(isEdit, dateStr = '') {
+            const titleEl = document.getElementById('modal-title');
+            const subtitleEl = document.getElementById('modal-subtitle');
+            const modeBadge = document.getElementById('record-mode-badge');
+            const modeText = document.getElementById('record-mode-text');
+            const modeTag = document.getElementById('record-mode-tag');
+            const submitBtn = document.getElementById('record-form-submit-btn');
+            const submitText = document.getElementById('record-submit-text');
+            const submitIcon = document.getElementById('record-submit-icon');
+            const iconContainer = document.getElementById('modal-icon-container');
+            const headerIcon = document.getElementById('modal-header-icon');
+
+            if (isEdit) {
+                if (titleEl) titleEl.innerText = 'แก้ไขยอดในรายการที่พิมพ์ไปแล้ว';
+                if (subtitleEl) subtitleEl.innerText = `กำลังแก้ไขข้อมูลของวันที่ ${formatThaiDateStr(dateStr)}`;
+                if (modeBadge) {
+                    modeBadge.className = "p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between bg-amber-50 text-amber-800 border border-amber-200";
+                }
+                if (modeText) {
+                    modeText.innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600"></i> โหมด: แก้ไขยอดเดิมของวันที่ <strong>${formatThaiDateStr(dateStr)}</strong>`;
+                }
+                if (modeTag) {
+                    modeTag.className = "text-[10px] px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900 font-bold";
+                    modeTag.innerText = "แก้ไขยอดเดิม";
+                }
+                if (submitBtn) {
+                    submitBtn.className = "px-5 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer";
+                }
+                if (submitText) submitText.innerText = 'ตรวจสอบยอดก่อนแก้ไข';
+                if (submitIcon) submitIcon.className = 'fa-solid fa-arrow-right';
+                if (iconContainer) iconContainer.className = 'w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm';
+                if (headerIcon) headerIcon.className = 'fa-solid fa-pen-to-square';
+            } else {
+                if (titleEl) titleEl.innerText = 'บันทึกยอดประจำวันใหม่';
+                if (subtitleEl) subtitleEl.innerText = 'กรอกยอดเงินเพื่อบันทึกรายการประจำวันใหม่เข้าระบบ';
+                if (modeBadge) {
+                    modeBadge.className = "p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between bg-slate-100 text-slate-700 border border-slate-200";
+                }
+                if (modeText) {
+                    modeText.innerHTML = `<i class="fa-solid fa-circle-plus text-primary-600"></i> โหมด: บันทึกยอดประจำวันใหม่`;
+                }
+                if (modeTag) {
+                    modeTag.className = "text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 font-bold";
+                    modeTag.innerText = "รายการใหม่";
+                }
+                if (submitBtn) {
+                    submitBtn.className = "px-5 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer";
+                }
+                if (submitText) submitText.innerText = 'ตรวจสอบรายการก่อนบันทึก';
+                if (submitIcon) submitIcon.className = 'fa-solid fa-arrow-right';
+                if (iconContainer) iconContainer.className = 'w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center text-sm';
+                if (headerIcon) headerIcon.className = 'fa-solid fa-file-invoice-dollar';
+            }
+        }
+
+        // Handle date input change to auto-detect if date already exists
+        function handleEntryDateChange() {
+            const curDate = document.getElementById('entry-date').value;
+            if (!curDate) return;
+
+            const existing = (summaryData.daily || []).find(r => r.date === curDate);
+            if (existing) {
+                // Auto-switch to edit mode for this record
+                currentEditingOriginalRecord = { ...existing };
+                document.getElementById('entry-id').value = existing.id || '';
+                document.getElementById('entry-income').value = existing.income;
+                document.getElementById('entry-expense').value = existing.expense;
+                document.getElementById('entry-balance').value = existing.balance;
+                document.getElementById('entry-note').value = existing.note || '';
+                populateQuickEditDropdown(curDate);
+                updateRecordModalModeUI(true, curDate);
+                calculateClosingBalance(false);
+                document.getElementById('entry-balance').value = existing.balance;
+            } else {
+                // New record
+                currentEditingOriginalRecord = null;
+                document.getElementById('entry-id').value = '';
+                populateQuickEditDropdown('');
+                updateRecordModalModeUI(false, curDate);
+                calculateClosingBalance(true);
+            }
+        }
+
         // Modal Controls
         function openRecordModal(date = null) {
             if (isReadOnly) {
@@ -2415,34 +2937,37 @@
                 return;
             }
             const modal = document.getElementById('recordModal');
-            const titleEl = document.getElementById('modal-title');
             const form = document.getElementById('recordForm');
             form.reset();
 
+            populateQuickEditDropdown(date || '');
+
             if (date) {
-                titleEl.innerText = 'แก้ไขยอดประจำวัน';
                 const target = (summaryData.daily || []).find(r => r.date === date);
                 if (target) {
+                    currentEditingOriginalRecord = { ...target };
                     document.getElementById('entry-id').value = target.id || '';
                     document.getElementById('entry-date').value = target.date;
                     document.getElementById('entry-income').value = target.income;
                     document.getElementById('entry-expense').value = target.expense;
                     document.getElementById('entry-balance').value = target.balance;
                     document.getElementById('entry-note').value = target.note || '';
-                    calculateClosingBalance();
+                    calculateClosingBalance(false);
                     document.getElementById('entry-balance').value = target.balance; // retain stored balance
+                    updateRecordModalModeUI(true, target.date);
                 }
             } else {
-                titleEl.innerText = 'บันทึกยอดประจำวันใหม่';
+                currentEditingOriginalRecord = null;
                 document.getElementById('entry-id').value = '';
                 setTodayDate();
-                calculateClosingBalance();
+                handleEntryDateChange();
             }
 
             modal.classList.remove('hidden');
         }
 
         function closeRecordModal() {
+            currentEditingOriginalRecord = null;
             document.getElementById('recordModal').classList.add('hidden');
         }
 
@@ -2451,7 +2976,7 @@
             document.getElementById('entry-date').value = today;
         }
 
-        function calculateClosingBalance() {
+        function calculateClosingBalance(forceRecalculate = false) {
             const income = parseFloat(document.getElementById('entry-income').value) || 0;
             const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
             const curDate = document.getElementById('entry-date').value;
@@ -2474,59 +2999,51 @@
             }
 
             const estimatedBalance = prevBalance + income - expense;
-            document.getElementById('entry-balance').value = estimatedBalance.toFixed(2);
+            if (forceRecalculate || !currentEditingOriginalRecord) {
+                document.getElementById('entry-balance').value = estimatedBalance.toFixed(2);
+            }
         }
 
-        async function handleFormSubmit(e) {
+        // Form Submit -> Intercept and show Pop-up Confirmation Modal
+        function handleFormSubmit(e) {
             e.preventDefault();
             if (isReadOnly) {
                 alert('โหมดสำหรับผู้บริหาร: ดูข้อมูลได้อย่างเดียว ไม่สามารถบันทึกหรือแก้ไขได้');
                 return;
             }
+
+            const id = document.getElementById('entry-id').value;
             const date = document.getElementById('entry-date').value;
             const income = parseFloat(document.getElementById('entry-income').value) || 0;
             const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
             const balance = parseFloat(document.getElementById('entry-balance').value) || 0;
             const note = document.getElementById('entry-note').value.trim();
 
-            const payload = { date, income, expense, balance, note, updatedAt: new Date().toISOString() };
-
-            if (dataSource === 'firebase' && firebaseRef) {
-                // Save to Firebase Realtime Database
-                try {
-                    await firebaseRef.child(date).set(payload);
-                    closeRecordModal();
-                    // Listener triggers re-render automatically!
-                } catch (err) {
-                    alert('เกิดข้อผิดพลาดในการบันทึกขึ้น Firebase: ' + err.message);
-                }
+            if (!date) {
+                alert('กรุณาระบุวันที่');
                 return;
-            } else if (dataSource === 'sqlite') {
-                // Save to SQLite via Server API
-                try {
-                    const res = await fetch('/api/records', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('API save failed');
-                } catch (err) {
-                    alert('เกิดข้อผิดพลาดในการบันทึกลงฐานข้อมูล SQLite: ' + err.message);
-                    return;
-                }
-            } else {
-                // LocalStorage save
-                const idx = rawRecords.findIndex(r => r.date === date);
-                if (idx >= 0) {
-                    rawRecords[idx] = { ...rawRecords[idx], ...payload };
-                } else {
-                    rawRecords.push(payload);
-                }
-                localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
             }
 
-            closeRecordModal();
-            await loadData();
+            const payload = {
+                id,
+                date,
+                income,
+                expense,
+                balance,
+                note,
+                updatedAt: new Date().toISOString()
+            };
+
+            const existingRecord = currentEditingOriginalRecord || (summaryData.daily || []).find(r => r.date === date);
+            const isEdit = !!existingRecord;
+
+            pendingActionData = {
+                action: isEdit ? 'edit' : 'save',
+                payload,
+                oldRecord: isEdit ? { ...existingRecord } : null
+            };
+
+            openConfirmModal();
         }
 
         function editRecord(date) {
@@ -2534,35 +3051,329 @@
             openRecordModal(date);
         }
 
-        async function deleteRecord(id, date) {
+        function deleteRecord(id, date) {
             if (isReadOnly) {
                 alert('โหมดสำหรับผู้บริหาร: ดูข้อมูลได้อย่างเดียว ไม่สามารถลบข้อมูลได้');
                 return;
             }
-            if (!confirm(`คุณต้องการลบข้อมูลวันที่ ${formatThaiDateStr(date)} หรือไม่?`)) return;
+            const target = (summaryData.daily || []).find(r => r.date === date);
+            pendingActionData = {
+                action: 'delete',
+                payload: { id, date },
+                oldRecord: target ? { ...target } : null
+            };
+            openConfirmModal();
+        }
 
-            if (dataSource === 'firebase' && firebaseRef) {
-                try {
-                    await firebaseRef.child(date).remove();
-                    // Listener updates UI automatically
-                } catch (err) {
-                    alert('ไม่สามารถลบข้อมูลจาก Firebase: ' + err.message);
+        // ==========================================
+        // Confirmation Pop-up Modal Logic
+        // ==========================================
+        function openConfirmModal() {
+            if (!pendingActionData) return;
+            const modal = document.getElementById('confirmActionModal');
+            const header = document.getElementById('confirm-modal-header');
+            const iconContainer = document.getElementById('confirm-modal-icon-container');
+            const icon = document.getElementById('confirm-modal-icon');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const subtitleEl = document.getElementById('confirm-modal-subtitle');
+            const typeBadge = document.getElementById('confirm-type-badge');
+            const dateDisplay = document.getElementById('confirm-date-display');
+            const sourceText = document.getElementById('confirm-source-text');
+            const submitBtn = document.getElementById('confirm-action-submit-btn');
+            const submitText = document.getElementById('confirm-submit-btn-text');
+            const editCompContainer = document.getElementById('confirm-edit-comparison-container');
+            const singleDetailContainer = document.getElementById('confirm-single-details-container');
+            const noteContainer = document.getElementById('confirm-note-container');
+            const noteDisplay = document.getElementById('confirm-detail-note');
+
+            sourceText.innerText = dataSource === 'firebase' ? 'Firebase Realtime' : (dataSource === 'sqlite' ? 'SQLite Server' : 'LocalStorage');
+
+            const { action, payload, oldRecord } = pendingActionData;
+
+            if (action === 'edit') {
+                header.className = "px-6 py-4 border-b border-amber-200 flex items-center justify-between bg-amber-50/80";
+                iconContainer.className = "w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg shadow-xs";
+                icon.className = "fa-solid fa-pen-to-square";
+                titleEl.innerText = "ยืนยันการแก้ไขยอดรายการ";
+                subtitleEl.innerText = "โปรดตรวจสอบการเปลี่ยนแปลงของยอดเงินก่อนดำเนินการบันทึก";
+                typeBadge.className = "px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-800";
+                typeBadge.innerText = "แก้ไขยอดเดิม";
+                dateDisplay.innerText = formatThaiDateStr(payload.date);
+
+                // Render Before & After Comparison Table
+                editCompContainer.classList.remove('hidden');
+                singleDetailContainer.classList.add('hidden');
+
+                const tbody = document.getElementById('confirm-comparison-tbody');
+                const oldInc = oldRecord ? oldRecord.income : 0;
+                const newInc = payload.income;
+                const diffInc = newInc - oldInc;
+
+                const oldExp = oldRecord ? oldRecord.expense : 0;
+                const newExp = payload.expense;
+                const diffExp = newExp - oldExp;
+
+                const oldNet = oldInc - oldExp;
+                const newNet = newInc - newExp;
+                const diffNet = newNet - oldNet;
+
+                const oldBal = oldRecord ? oldRecord.balance : 0;
+                const newBal = payload.balance;
+                const diffBal = newBal - oldBal;
+
+                const renderDiffBadge = (diff) => {
+                    if (Math.abs(diff) < 0.001) return `<span class="text-slate-400 font-normal">ไม่เปลี่ยนแปลง</span>`;
+                    const sign = diff > 0 ? '+' : '';
+                    const color = diff > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
+                    return `<span class="px-1.5 py-0.5 rounded font-bold ${color}">${sign}฿${formatExactNumber(diff)}</span>`;
+                };
+
+                tbody.innerHTML = `
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="px-3 py-2 font-medium text-emerald-800">รายรับ</td>
+                        <td class="px-3 py-2 text-right text-slate-500">฿${formatExactNumber(oldInc)}</td>
+                        <td class="px-3 py-2 text-right font-bold text-emerald-600 bg-emerald-50/30">฿${formatExactNumber(newInc)}</td>
+                        <td class="px-3 py-2 text-right">${renderDiffBadge(diffInc)}</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="px-3 py-2 font-medium text-rose-800">รายจ่าย</td>
+                        <td class="px-3 py-2 text-right text-slate-500">฿${formatExactNumber(oldExp)}</td>
+                        <td class="px-3 py-2 text-right font-bold text-rose-600 bg-rose-50/30">฿${formatExactNumber(newExp)}</td>
+                        <td class="px-3 py-2 text-right">${renderDiffBadge(diffExp)}</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="px-3 py-2 font-medium text-slate-700">รับ/จ่าย สุทธิ</td>
+                        <td class="px-3 py-2 text-right text-slate-500">฿${formatExactNumber(oldNet)}</td>
+                        <td class="px-3 py-2 text-right font-bold text-slate-800 bg-slate-50">฿${formatExactNumber(newNet)}</td>
+                        <td class="px-3 py-2 text-right">${renderDiffBadge(diffNet)}</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/60 bg-blue-50/30">
+                        <td class="px-3 py-2 font-bold text-blue-900">เงินฝากคงเหลือสิ้นวัน</td>
+                        <td class="px-3 py-2 text-right text-slate-500">฿${formatExactNumber(oldBal)}</td>
+                        <td class="px-3 py-2 text-right font-extrabold text-blue-700 bg-blue-50">฿${formatExactNumber(newBal)}</td>
+                        <td class="px-3 py-2 text-right">${renderDiffBadge(diffBal)}</td>
+                    </tr>
+                `;
+
+                if (payload.note || (oldRecord && oldRecord.note)) {
+                    noteContainer.classList.remove('hidden');
+                    const oldNote = (oldRecord && oldRecord.note) ? oldRecord.note : '-';
+                    const newNote = payload.note ? payload.note : '-';
+                    noteDisplay.innerHTML = `<div><span class="text-slate-400">เดิม:</span> ${oldNote}</div><div><span class="text-primary-700 font-semibold">ใหม่:</span> ${newNote}</div>`;
+                } else {
+                    noteContainer.classList.add('hidden');
                 }
-                return;
-            } else if (dataSource === 'sqlite') {
-                try {
-                    const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
-                    if (!res.ok) throw new Error('Delete failed');
-                } catch (err) {
-                    alert('ไม่สามารถลบข้อมูลได้: ' + err.message);
-                    return;
+
+                submitBtn.className = "px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm shadow-amber-500/25 flex items-center gap-1.5 cursor-pointer";
+                submitText.innerText = "ยืนยันการแก้ไขยอด";
+
+            } else if (action === 'save') {
+                header.className = "px-6 py-4 border-b border-emerald-200 flex items-center justify-between bg-emerald-50/80";
+                iconContainer.className = "w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg shadow-xs";
+                icon.className = "fa-solid fa-clipboard-check";
+                titleEl.innerText = "ยืนยันการบันทึกรายการใหม่";
+                subtitleEl.innerText = "โปรดตรวจสอบข้อมูลยอดเงินก่อนยืนยันบันทึกเข้าระบบ";
+                typeBadge.className = "px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800";
+                typeBadge.innerText = "บันทึกรายการใหม่";
+                dateDisplay.innerText = formatThaiDateStr(payload.date);
+
+                editCompContainer.classList.add('hidden');
+                singleDetailContainer.classList.remove('hidden');
+
+                // Compute previous balance
+                const daily = summaryData.daily || [];
+                let prevBal = 0;
+                const prior = daily.filter(r => r.date < payload.date);
+                if (prior.length > 0) {
+                    prevBal = prior[prior.length - 1].balance;
+                } else if (daily.length > 0) {
+                    prevBal = daily[0].balance - (daily[0].income - daily[0].expense);
                 }
-            } else {
-                rawRecords = rawRecords.filter(r => r.date !== date);
-                localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+
+                document.getElementById('confirm-detail-prev').innerText = '฿' + formatExactNumber(prevBal);
+                document.getElementById('confirm-detail-income').innerText = '฿' + formatExactNumber(payload.income);
+                document.getElementById('confirm-detail-expense').innerText = '฿' + formatExactNumber(payload.expense);
+                const net = payload.income - payload.expense;
+                document.getElementById('confirm-detail-net').innerText = (net >= 0 ? '+' : '') + '฿' + formatExactNumber(net);
+                document.getElementById('confirm-detail-balance').innerText = '฿' + formatExactNumber(payload.balance);
+
+                if (payload.note) {
+                    noteContainer.classList.remove('hidden');
+                    noteDisplay.innerText = payload.note;
+                } else {
+                    noteContainer.classList.add('hidden');
+                }
+
+                submitBtn.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm shadow-emerald-500/25 flex items-center gap-1.5 cursor-pointer";
+                submitText.innerText = "ยืนยันบันทึกข้อมูล";
+
+            } else if (action === 'delete') {
+                header.className = "px-6 py-4 border-b border-rose-200 flex items-center justify-between bg-rose-50/80";
+                iconContainer.className = "w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg shadow-xs";
+                icon.className = "fa-solid fa-trash-can";
+                titleEl.innerText = "ยืนยันการลบรายการ";
+                subtitleEl.innerText = "ข้อมูลของวันนี้จะถูกลบออกจากระบบอย่างถาวร โปรดตรวจสอบความถูกต้อง";
+                typeBadge.className = "px-2.5 py-1 rounded-md text-xs font-bold bg-rose-100 text-rose-800";
+                typeBadge.innerText = "ลบรายการนี้";
+                dateDisplay.innerText = formatThaiDateStr(payload.date);
+
+                editCompContainer.classList.add('hidden');
+                singleDetailContainer.classList.remove('hidden');
+
+                if (oldRecord) {
+                    document.getElementById('confirm-detail-prev').innerText = '฿' + formatExactNumber(oldRecord.prevBalance || 0);
+                    document.getElementById('confirm-detail-income').innerText = '฿' + formatExactNumber(oldRecord.income);
+                    document.getElementById('confirm-detail-expense').innerText = '฿' + formatExactNumber(oldRecord.expense);
+                    const net = oldRecord.income - oldRecord.expense;
+                    document.getElementById('confirm-detail-net').innerText = (net >= 0 ? '+' : '') + '฿' + formatExactNumber(net);
+                    document.getElementById('confirm-detail-balance').innerText = '฿' + formatExactNumber(oldRecord.balance);
+                    if (oldRecord.note) {
+                        noteContainer.classList.remove('hidden');
+                        noteDisplay.innerText = oldRecord.note;
+                    } else {
+                        noteContainer.classList.add('hidden');
+                    }
+                }
+
+                submitBtn.className = "px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm shadow-rose-500/25 flex items-center gap-1.5 cursor-pointer";
+                submitText.innerText = "ยืนยันลบรายการนี้";
             }
 
-            await loadData();
+            modal.classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmActionModal').classList.add('hidden');
+        }
+
+        // Execute Confirmed Operation
+        async function executeConfirmedAction() {
+            if (!pendingActionData) return;
+            const { action, payload } = pendingActionData;
+            const submitBtn = document.getElementById('confirm-action-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> กำลังดำเนินการ...';
+            }
+
+            try {
+                if (action === 'save' || action === 'edit') {
+                    if (dataSource === 'firebase' && firebaseRef) {
+                        await firebaseRef.child(payload.date).set(payload);
+                    } else if (dataSource === 'sqlite') {
+                        const res = await fetch('/api/records', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) throw new Error('API save failed');
+                    } else {
+                        const idx = rawRecords.findIndex(r => r.date === payload.date);
+                        if (idx >= 0) {
+                            rawRecords[idx] = { ...rawRecords[idx], ...payload };
+                        } else {
+                            rawRecords.push(payload);
+                        }
+                        localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+                    }
+
+                    closeConfirmModal();
+                    closeRecordModal();
+                    await loadData();
+
+                    showSuccessModal({
+                        title: action === 'edit' ? 'แก้ไขยอดเสร็จสิ้นเรียบร้อยแล้ว!' : 'บันทึกข้อมูลเสร็จสิ้นเรียบร้อยแล้ว!',
+                        subtitle: `ข้อมูลของวันที่ ${formatThaiDateStr(payload.date)} ได้รับการอัปเดตเรียบร้อยแล้ว`,
+                        detailsHtml: `
+                            <div class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-slate-500 font-medium">วันที่:</span>
+                                <span class="font-bold text-slate-800">${formatThaiDateStr(payload.date)}</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-rose-600 font-medium">รายจ่าย:</span>
+                                <span class="font-bold text-rose-600">฿${formatExactNumber(payload.expense)}</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-blue-700 font-medium">เงินฝากคงเหลือสิ้นวัน:</span>
+                                <span class="font-bold text-blue-700">฿${formatExactNumber(payload.balance)}</span>
+                            </div>
+                            <div class="flex justify-between py-1 text-slate-500">
+                                <span>แหล่งจัดเก็บ:</span>
+                                <span class="font-semibold text-slate-700">${dataSource === 'firebase' ? 'Firebase Realtime' : (dataSource === 'sqlite' ? 'SQLite Server' : 'LocalStorage')}</span>
+                            </div>
+                        `
+                    });
+
+                } else if (action === 'delete') {
+                    if (dataSource === 'firebase' && firebaseRef) {
+                        await firebaseRef.child(payload.date).remove();
+                    } else if (dataSource === 'sqlite') {
+                        const res = await fetch(`/api/records/${payload.id || payload.date}`, { method: 'DELETE' });
+                        if (!res.ok) throw new Error('Delete failed');
+                    } else {
+                        rawRecords = rawRecords.filter(r => r.date !== payload.date);
+                        localStorage.setItem('cash_flow_records', JSON.stringify(rawRecords));
+                    }
+
+                    closeConfirmModal();
+                    await loadData();
+
+                    showSuccessModal({
+                        title: 'ลบรายการเสร็จสิ้นเรียบร้อยแล้ว!',
+                        subtitle: `ข้อมูลของวันที่ ${formatThaiDateStr(payload.date)} ถูกลบออกจากระบบแล้ว`,
+                        detailsHtml: `
+                            <div class="flex justify-between py-1 text-slate-600">
+                                <span>วันที่ลบ:</span>
+                                <span class="font-bold text-slate-800">${formatThaiDateStr(payload.date)}</span>
+                            </div>
+                            <div class="flex justify-between py-1 text-slate-500">
+                                <span>สถานะ:</span>
+                                <span class="font-semibold text-rose-600">ลบข้อมูลถาวรแล้ว</span>
+                            </div>
+                        `
+                    });
+                }
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการดำเนินรายการ: ' + err.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        // ==========================================
+        // Completion Pop-up Modal Logic
+        // ==========================================
+        function showSuccessModal({ title, subtitle, detailsHtml }) {
+            const modal = document.getElementById('actionSuccessModal');
+            const titleEl = document.getElementById('success-modal-title');
+            const subtitleEl = document.getElementById('success-modal-subtitle');
+            const cardEl = document.getElementById('success-modal-details-card');
+            const countdownEl = document.getElementById('success-auto-close-countdown');
+
+            if (titleEl) titleEl.innerText = title;
+            if (subtitleEl) subtitleEl.innerText = subtitle;
+            if (cardEl) cardEl.innerHTML = detailsHtml || '';
+
+            modal.classList.remove('hidden');
+
+            let secondsLeft = 3;
+            if (countdownEl) countdownEl.innerText = secondsLeft;
+            clearInterval(successCountdownInterval);
+            successCountdownInterval = setInterval(() => {
+                secondsLeft -= 1;
+                if (countdownEl) countdownEl.innerText = secondsLeft;
+                if (secondsLeft <= 0) {
+                    closeSuccessModal();
+                }
+            }, 1000);
+        }
+
+        function closeSuccessModal() {
+            clearInterval(successCountdownInterval);
+            const modal = document.getElementById('actionSuccessModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         async function resetSampleData() {
@@ -2621,9 +3432,38 @@
             document.body.removeChild(link);
         }
 
+        // Responsive Orientation and Resize Handler (Auto-adapts chart and layout across mobile/tablet/desktop)
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (mainChart) {
+                    mainChart.resize();
+                    if (summaryData && summaryData.daily && summaryData.daily.length > 0) {
+                        const items = currentMode === 'daily' 
+                            ? (filteredDailyRecords || summaryData.daily) 
+                            : (summaryData[currentMode] || []);
+                        updateCharts(items);
+                    }
+                }
+            }, 200);
+        });
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (mainChart) mainChart.resize();
+            }, 250);
+        });
+
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
             applyReadOnlyMode();
+            // ค่าเริ่มต้นทุกครั้ง: แสดงเฉพาะ รายจ่าย และ เงินฝากคงเหลือ (ข้อมูลอื่นต้องกดเลือกจึงจะแสดง)
+            chartConfig.showIncome = false;
+            chartConfig.showExpense = true;
+            chartConfig.showBalance = true;
+            chartConfig.showNet = false;
+            updateDatasetButtonStyles();
+
             initChartSize();
             loadData();
         });
