@@ -680,35 +680,38 @@
                         <span id="entry-prev-balance-display" class="font-bold text-slate-800 text-sm">฿0.00</span>
                     </div>
 
-                    <!-- รายรับ & รายจ่าย -->
+                    <!-- รายรับ & รายจ่าย (ใส่จุลภาคอัตโนมัติ) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-emerald-700 mb-1">รายรับประจำวัน (บาท) <span class="text-rose-500">*</span></label>
                             <div class="relative">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
-                                <input type="number" step="0.01" min="0" id="entry-income" required placeholder="0.00" oninput="calculateClosingBalance()" class="w-full pl-7 pr-3 py-2 border border-emerald-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-emerald-700 font-semibold">
+                                <input type="text" inputmode="decimal" id="entry-income" required placeholder="0.00" oninput="formatNumberInputOnType(this)" onblur="formatNumberInputOnBlur(this)" onkeydown="handleNumberInputKeydown(event)" class="w-full pl-7 pr-3 py-2 border border-emerald-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-emerald-700 font-semibold">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-rose-700 mb-1">รายจ่ายประจำวัน (บาท) <span class="text-rose-500">*</span></label>
                             <div class="relative">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
-                                <input type="number" step="0.01" min="0" id="entry-expense" required placeholder="0.00" oninput="calculateClosingBalance()" class="w-full pl-7 pr-3 py-2 border border-rose-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 text-rose-700 font-semibold">
+                                <input type="text" inputmode="decimal" id="entry-expense" required placeholder="0.00" oninput="formatNumberInputOnType(this)" onblur="formatNumberInputOnBlur(this)" onkeydown="handleNumberInputKeydown(event)" class="w-full pl-7 pr-3 py-2 border border-rose-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 text-rose-700 font-semibold">
                             </div>
                         </div>
                     </div>
 
-                    <!-- เงินคงเหลือสิ้นวัน -->
+                    <!-- เงินคงเหลือสิ้นวัน (กรอกข้อมูลด้วยตนเอง ไม่ต้องเข้าสูตร พร้อมใส่จุลภาคอัตโนมัติ) -->
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs font-semibold text-slate-700">เงินฝากคงเหลือสิ้นวัน (บาท) <span class="text-rose-500">*</span></label>
-                            <button type="button" onclick="calculateClosingBalance(true)" class="text-[11px] text-primary-600 hover:text-primary-800 font-semibold underline cursor-pointer" title="คำนวณตามสูตร (ยอดยกมา + รับ - จ่าย)">
-                                คำนวณใหม่อัตโนมัติ
-                            </button>
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-pen-clip text-primary-600 text-xs"></i>
+                                เงินฝากคงเหลือสิ้นวัน (บาท) <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[11px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                <i class="fa-solid fa-keyboard text-[10px] mr-1 text-slate-400"></i>กรอกยอดจริงด้วยตนเอง
+                            </span>
                         </div>
                         <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">฿</span>
-                            <input type="number" step="0.01" id="entry-balance" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900 font-bold">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">฿</span>
+                            <input type="text" inputmode="decimal" id="entry-balance" required placeholder="0.00" oninput="formatNumberInputOnType(this)" onblur="formatNumberInputOnBlur(this)" onkeydown="handleNumberInputKeydown(event)" class="w-full pl-7 pr-3 py-2 border border-blue-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-900 font-bold bg-blue-50/20">
                         </div>
                     </div>
 
@@ -3011,6 +3014,132 @@
             }
         }
 
+        // ==========================================
+        // Number Formatting with Thousands Commas (ใส่จุลภาคอัตโนมัติ)
+        // ==========================================
+        function parseFormattedNumber(val) {
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            if (!val && val !== 0) return 0;
+            const clean = String(val).replace(/,/g, '').trim();
+            const num = parseFloat(clean);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function formatWithCommas(val, decimals = 2) {
+            if (val === null || val === undefined || val === '') return '';
+            const num = typeof val === 'number' ? val : parseFormattedNumber(val);
+            if (isNaN(num)) return '';
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatNumberInputOnType(input) {
+            if (!input) return;
+            const raw = input.value;
+            if (!raw) return;
+
+            // Track cursor position relative to non-comma characters
+            const selStart = input.selectionStart || 0;
+            const textBefore = raw.substring(0, selStart);
+            const digitsBefore = (textBefore.match(/[0-9.]/g) || []).length;
+
+            const isNegative = raw.trim().startsWith('-');
+            const clean = raw.replace(/[^0-9.]/g, '');
+            if (!clean && clean !== '0') {
+                input.value = isNegative ? '-' : '';
+                return;
+            }
+
+            const parts = clean.split('.');
+            let intPart = parts[0] || '0';
+            if (intPart.length > 1 && intPart.startsWith('0')) {
+                intPart = intPart.replace(/^0+/, '') || '0';
+            }
+
+            const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            let result = (isNegative ? '-' : '') + formattedInt;
+
+            if (parts.length > 1) {
+                // Keep up to 2 decimal places while typing
+                const decPart = parts.slice(1).join('').slice(0, 2);
+                result += '.' + decPart;
+            } else if (raw.endsWith('.') && !result.includes('.')) {
+                result += '.';
+            }
+
+            input.value = result;
+
+            // Restore caret position
+            let newPos = 0;
+            let count = 0;
+            for (let i = 0; i < result.length; i++) {
+                if (/[0-9.]/.test(result[i])) {
+                    count++;
+                }
+                if (count === digitsBefore) {
+                    newPos = i + 1;
+                    break;
+                }
+            }
+            if (digitsBefore === 0) newPos = isNegative ? 1 : 0;
+            if (newPos > result.length) newPos = result.length;
+            input.setSelectionRange(newPos, newPos);
+        }
+
+        function formatNumberInputOnBlur(input) {
+            if (!input || !input.value.trim()) return;
+            const num = parseFormattedNumber(input.value);
+            if (!isNaN(num)) {
+                input.value = formatWithCommas(num, 2);
+            }
+        }
+
+        function handleNumberInputKeydown(e) {
+            if (e.key === 'Backspace') {
+                const input = e.target;
+                const pos = input.selectionStart;
+                if (pos > 0 && input.selectionStart === input.selectionEnd) {
+                    if (input.value[pos - 1] === ',') {
+                        e.preventDefault();
+                        const before = input.value.slice(0, pos - 2);
+                        const after = input.value.slice(pos);
+                        input.value = before + after;
+                        input.setSelectionRange(pos - 2, pos - 2);
+                        formatNumberInputOnType(input);
+                    }
+                }
+            }
+        }
+
+        function updatePrevBalanceDisplay(curDate) {
+            if (!curDate) {
+                curDate = document.getElementById('entry-date')?.value || '';
+            }
+            const daily = summaryData.daily || [];
+            let prevBalance = 0;
+            if (daily.length > 0 && curDate) {
+                const priorRecords = daily.filter(r => r.date < curDate);
+                if (priorRecords.length > 0) {
+                    prevBalance = priorRecords[priorRecords.length - 1].balance;
+                } else {
+                    prevBalance = daily[0].balance - (daily[0].income - daily[0].expense);
+                }
+            }
+
+            const prevDisplay = document.getElementById('entry-prev-balance-display');
+            if (prevDisplay) {
+                prevDisplay.innerText = '฿' + formatExactNumber(prevBalance);
+            }
+        }
+
+        // Backward compatibility stub - only updates beginning balance display, does NOT alter balance field
+        function calculateClosingBalance(forceRecalculate = false) {
+            const curDate = document.getElementById('entry-date')?.value;
+            updatePrevBalanceDisplay(curDate);
+        }
+
         // Handle date input change to auto-detect if date already exists
         function handleEntryDateChange() {
             const curDate = document.getElementById('entry-date').value;
@@ -3021,21 +3150,24 @@
                 // Auto-switch to edit mode for this record
                 currentEditingOriginalRecord = { ...existing };
                 document.getElementById('entry-id').value = existing.id || '';
-                document.getElementById('entry-income').value = existing.income;
-                document.getElementById('entry-expense').value = existing.expense;
-                document.getElementById('entry-balance').value = existing.balance;
+                document.getElementById('entry-income').value = formatWithCommas(existing.income);
+                document.getElementById('entry-expense').value = formatWithCommas(existing.expense);
+                document.getElementById('entry-balance').value = formatWithCommas(existing.balance);
                 document.getElementById('entry-note').value = existing.note || '';
                 populateQuickEditDropdown(curDate);
                 updateRecordModalModeUI(true, curDate);
-                calculateClosingBalance(false);
-                document.getElementById('entry-balance').value = existing.balance;
+                updatePrevBalanceDisplay(curDate);
             } else {
-                // New record
+                // New record - manual entry, no auto formula calculation
                 currentEditingOriginalRecord = null;
                 document.getElementById('entry-id').value = '';
+                document.getElementById('entry-income').value = '';
+                document.getElementById('entry-expense').value = '';
+                document.getElementById('entry-balance').value = '';
+                document.getElementById('entry-note').value = '';
                 populateQuickEditDropdown('');
                 updateRecordModalModeUI(false, curDate);
-                calculateClosingBalance(true);
+                updatePrevBalanceDisplay(curDate);
             }
         }
 
@@ -3057,17 +3189,20 @@
                     currentEditingOriginalRecord = { ...target };
                     document.getElementById('entry-id').value = target.id || '';
                     document.getElementById('entry-date').value = target.date;
-                    document.getElementById('entry-income').value = target.income;
-                    document.getElementById('entry-expense').value = target.expense;
-                    document.getElementById('entry-balance').value = target.balance;
+                    document.getElementById('entry-income').value = formatWithCommas(target.income);
+                    document.getElementById('entry-expense').value = formatWithCommas(target.expense);
+                    document.getElementById('entry-balance').value = formatWithCommas(target.balance);
                     document.getElementById('entry-note').value = target.note || '';
-                    calculateClosingBalance(false);
-                    document.getElementById('entry-balance').value = target.balance; // retain stored balance
                     updateRecordModalModeUI(true, target.date);
+                    updatePrevBalanceDisplay(target.date);
                 }
             } else {
                 currentEditingOriginalRecord = null;
                 document.getElementById('entry-id').value = '';
+                document.getElementById('entry-income').value = '';
+                document.getElementById('entry-expense').value = '';
+                document.getElementById('entry-balance').value = '';
+                document.getElementById('entry-note').value = '';
                 setTodayDate();
                 handleEntryDateChange();
             }
@@ -3115,34 +3250,6 @@
             document.getElementById('entry-date').value = today;
         }
 
-        function calculateClosingBalance(forceRecalculate = false) {
-            const income = parseFloat(document.getElementById('entry-income').value) || 0;
-            const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
-            const curDate = document.getElementById('entry-date').value;
-
-            // Find previous record balance before this date
-            const daily = summaryData.daily || [];
-            let prevBalance = 0;
-            if (daily.length > 0) {
-                const priorRecords = daily.filter(r => r.date < curDate);
-                if (priorRecords.length > 0) {
-                    prevBalance = priorRecords[priorRecords.length - 1].balance;
-                } else {
-                    prevBalance = daily[0].balance - (daily[0].income - daily[0].expense);
-                }
-            }
-
-            const prevDisplay = document.getElementById('entry-prev-balance-display');
-            if (prevDisplay) {
-                prevDisplay.innerText = '฿' + formatExactNumber(prevBalance);
-            }
-
-            const estimatedBalance = prevBalance + income - expense;
-            if (forceRecalculate || !currentEditingOriginalRecord) {
-                document.getElementById('entry-balance').value = estimatedBalance.toFixed(2);
-            }
-        }
-
         // Form Submit -> Intercept and show Pop-up Confirmation Modal
         function handleFormSubmit(e) {
             e.preventDefault();
@@ -3153,9 +3260,9 @@
 
             const id = document.getElementById('entry-id').value;
             const date = document.getElementById('entry-date').value;
-            const income = parseFloat(document.getElementById('entry-income').value) || 0;
-            const expense = parseFloat(document.getElementById('entry-expense').value) || 0;
-            const balance = parseFloat(document.getElementById('entry-balance').value) || 0;
+            const income = parseFormattedNumber(document.getElementById('entry-income').value);
+            const expense = parseFormattedNumber(document.getElementById('entry-expense').value);
+            const balance = parseFormattedNumber(document.getElementById('entry-balance').value);
             const note = document.getElementById('entry-note').value.trim();
 
             if (!date) {
