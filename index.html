@@ -479,40 +479,65 @@
                 </div>
 
                 <!-- Row 2: Daily Range Filter (Shows only when in Daily mode) -->
-                <div id="daily-filter-container" class="pt-2.5 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                <div id="daily-filter-container" class="pt-2.5 border-t border-slate-200/70 flex flex-col gap-2 text-xs">
                     
-                    <!-- Quick Presets -->
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
-                            <i class="fa-solid fa-calendar-days text-slate-400"></i> กรองช่วงวัน:
-                        </span>
-                        <button id="filter-btn-7" onclick="setDailyRange('last7')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs">7 วันล่าสุด</button>
-                        <button id="filter-btn-14" onclick="setDailyRange('last14')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs">14 วันล่าสุด</button>
-                        <button id="filter-btn-30" onclick="setDailyRange('last30')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs">30 วันล่าสุด</button>
-                        <button id="filter-btn-all" onclick="setDailyRange('all')" class="px-2.5 py-1 rounded-md bg-primary-600 text-white font-semibold shadow-xs transition-all">ทั้งหมด</button>
-                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-2.5">
+                        <!-- Quick Presets & Custom Days -->
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                                <i class="fa-solid fa-calendar-days text-slate-400"></i> เลือกช่วงเวลา:
+                            </span>
+                            <button id="filter-btn-5" onclick="setDailyRange('last5')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs cursor-pointer">5 วัน</button>
+                            <button id="filter-btn-7" onclick="setDailyRange('last7')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs cursor-pointer">7 วัน</button>
+                            <button id="filter-btn-15" onclick="setDailyRange('last15')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs cursor-pointer">15 วัน</button>
+                            <button id="filter-btn-30" onclick="setDailyRange('last30')" class="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs cursor-pointer">30 วัน</button>
+                            <button id="filter-btn-all" onclick="setDailyRange('all')" class="px-2.5 py-1 rounded-md bg-primary-600 text-white font-semibold shadow-xs transition-all cursor-pointer">ทั้งหมด</button>
 
-                    <!-- Month & Custom Range -->
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <!-- Month Dropdown -->
-                        <select id="daily-month-select" onchange="handleMonthFilterChange()" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium">
-                            <option value="">-- กรองรายเดือน --</option>
-                        </select>
-
-                        <!-- Custom Date Range -->
-                        <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 shadow-xs">
-                            <input type="date" id="custom-start-date" class="text-[11px] text-slate-700 focus:outline-none border-0 p-0.5">
-                            <span class="text-slate-400">-</span>
-                            <input type="date" id="custom-end-date" class="text-[11px] text-slate-700 focus:outline-none border-0 p-0.5">
-                            <button onclick="applyCustomDateFilter()" class="ml-1 px-2 py-0.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded text-[11px] font-semibold" title="ค้นหาตามช่วงวันที่">
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </button>
+                            <!-- กำหนดจำนวนวันเอง (Custom N Days) -->
+                            <div id="custom-days-container" class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 shadow-xs transition-all ml-1" title="พิมพ์จำนวนวันแล้วกด Enter หรือปุ่มยืนยัน">
+                                <span class="text-slate-500 text-[11px] font-medium">กำหนดเอง:</span>
+                                <input type="number" id="custom-days-input" min="1" max="999" placeholder="วัน" class="w-12 text-center font-bold text-slate-800 focus:outline-none border-b border-primary-400 text-xs py-0.5" onkeydown="if(event.key==='Enter') applyCustomDaysFilter()">
+                                <span class="text-slate-500 text-[11px]">วัน</span>
+                                <button type="button" onclick="applyCustomDaysFilter()" class="px-1.5 py-0.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded text-[11px] font-semibold transition-colors cursor-pointer" title="แสดงข้อมูลตามจำนวนวันที่ระบุ">
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <button onclick="resetDateFilter()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-200 transition-colors" title="ล้างตัวกรอง">
-                            <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
-                        </button>
+                        <!-- Month & Custom Date Range -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <!-- Custom Date Range (จากวันที่ - ถึงวันที่) -->
+                            <div id="custom-date-container" class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 shadow-xs transition-all" title="เลือกช่วงวันที่เริ่มต้นและสิ้นสุด">
+                                <span class="text-slate-400 text-[11px] hidden sm:inline"><i class="fa-regular fa-calendar text-[10px]"></i></span>
+                                <input type="date" id="custom-start-date" class="text-[11px] text-slate-700 focus:outline-none border-0 p-0.5" title="วันเริ่มต้น">
+                                <span class="text-slate-400">-</span>
+                                <input type="date" id="custom-end-date" class="text-[11px] text-slate-700 focus:outline-none border-0 p-0.5" title="วันสิ้นสุด">
+                                <button type="button" onclick="applyCustomDateFilter()" class="ml-1 px-2 py-0.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded text-[11px] font-semibold cursor-pointer" title="ค้นหาตามช่วงวันที่">
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </button>
+                            </div>
+
+                            <!-- Month Dropdown -->
+                            <select id="daily-month-select" onchange="handleMonthFilterChange()" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium">
+                                <option value="">-- กรองรายเดือน --</option>
+                            </select>
+
+                            <button type="button" onclick="resetDateFilter()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-md hover:bg-slate-200 transition-colors cursor-pointer" title="ล้างตัวกรองกลับสู่ทั้งหมด">
+                                <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- Active Range Banner / Indicator -->
+                    <div id="active-range-banner" class="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200/60">
+                        <span id="active-range-text" class="flex items-center gap-1.5 font-medium text-slate-700">
+                            <i class="fa-solid fa-filter text-primary-600"></i> ช่วงเวลา: <strong class="text-primary-700">ข้อมูลทั้งหมด</strong>
+                        </span>
+                        <span id="active-range-actions" class="text-slate-400 text-[10px]">
+                            คลิกเลือก 5 วัน, 7 วัน, 15 วัน หรือกำหนดเองด้านบนเพื่อเปลี่ยนมุมมอง
+                        </span>
+                    </div>
+
                 </div>
 
             </div>
@@ -1344,7 +1369,8 @@
             showNet: false,     // ซ่อนเป็นค่าเริ่มต้น กดเพื่อแสดง
             showDataLabels: true, // แสดงตัวเลขบนจุดตัดกราฟ
             chartType: 'line',  // 'line' (หลัก) | 'combo' | 'bar'
-            dailyRange: 'all',  // 'all' | 'last7' | 'last14' | 'last30' | 'month' | 'custom'
+            dailyRange: 'all',  // 'all' | 'last5' | 'last7' | 'last15' | 'last30' | 'customDays' | 'month' | 'custom'
+            customDays: null,
             selectedMonth: '',
             customStart: '',
             customEnd: ''
@@ -1569,17 +1595,24 @@
             };
         }
 
-        // Filter daily items based on dailyRange setting
+        // Filter daily items based on dailyRange setting (รองรับ 5 วัน, 7 วัน, 15 วัน, 30 วัน, กำหนดจำนวนวันเอง, ช่วงวันที่)
         function getFilteredDailyList(fullDailyList) {
             if (!fullDailyList || fullDailyList.length === 0) return [];
             let list = [...fullDailyList];
 
-            if (chartConfig.dailyRange === 'last7') {
-                return list.slice(-7);
-            } else if (chartConfig.dailyRange === 'last14') {
-                return list.slice(-14);
+            if (chartConfig.dailyRange === 'last5') {
+                return list.length > 5 ? list.slice(-5) : list;
+            } else if (chartConfig.dailyRange === 'last7') {
+                return list.length > 7 ? list.slice(-7) : list;
+            } else if (chartConfig.dailyRange === 'last15') {
+                return list.length > 15 ? list.slice(-15) : list;
             } else if (chartConfig.dailyRange === 'last30') {
-                return list.slice(-30);
+                return list.length > 30 ? list.slice(-30) : list;
+            } else if (chartConfig.dailyRange === 'customDays') {
+                const days = parseInt(chartConfig.customDays, 10);
+                if (days && days > 0) {
+                    return list.length > days ? list.slice(-days) : list;
+                }
             } else if (chartConfig.dailyRange === 'month' && chartConfig.selectedMonth) {
                 return list.filter(r => r.date.startsWith(chartConfig.selectedMonth));
             } else if (chartConfig.dailyRange === 'custom') {
@@ -2131,6 +2164,58 @@
             chartConfig.selectedMonth = '';
             chartConfig.customStart = '';
             chartConfig.customEnd = '';
+            chartConfig.customDays = null;
+
+            const mSel = document.getElementById('daily-month-select');
+            if (mSel) mSel.value = '';
+            const cStart = document.getElementById('custom-start-date');
+            if (cStart) cStart.value = '';
+            const cEnd = document.getElementById('custom-end-date');
+            if (cEnd) cEnd.value = '';
+            const dInput = document.getElementById('custom-days-input');
+            if (dInput) {
+                if (range === 'last5') dInput.value = '5';
+                else if (range === 'last7') dInput.value = '7';
+                else if (range === 'last15') dInput.value = '15';
+                else if (range === 'last30') dInput.value = '30';
+                else dInput.value = '';
+            }
+
+            updateDailyRangeButtonStyles();
+            renderDashboard();
+        }
+
+        function applyCustomDaysFilter() {
+            const input = document.getElementById('custom-days-input');
+            if (!input) return;
+            const days = parseInt(input.value, 10);
+            if (!days || days <= 0) {
+                alert('กรุณาระบุจำนวนวันมากกว่า 0 (เช่น 5, 7, 15 วัน)');
+                input.focus();
+                return;
+            }
+
+            // Sync with preset button if exact match
+            if (days === 5) {
+                setDailyRange('last5');
+                return;
+            } else if (days === 7) {
+                setDailyRange('last7');
+                return;
+            } else if (days === 15) {
+                setDailyRange('last15');
+                return;
+            } else if (days === 30) {
+                setDailyRange('last30');
+                return;
+            }
+
+            chartConfig.dailyRange = 'customDays';
+            chartConfig.customDays = days;
+            chartConfig.selectedMonth = '';
+            chartConfig.customStart = '';
+            chartConfig.customEnd = '';
+
             const mSel = document.getElementById('daily-month-select');
             if (mSel) mSel.value = '';
             const cStart = document.getElementById('custom-start-date');
@@ -2147,6 +2232,15 @@
             if (sel) {
                 chartConfig.dailyRange = 'month';
                 chartConfig.selectedMonth = sel;
+                chartConfig.customDays = null;
+                chartConfig.customStart = '';
+                chartConfig.customEnd = '';
+                const dInput = document.getElementById('custom-days-input');
+                if (dInput) dInput.value = '';
+                const cStart = document.getElementById('custom-start-date');
+                if (cStart) cStart.value = '';
+                const cEnd = document.getElementById('custom-end-date');
+                if (cEnd) cEnd.value = '';
             } else {
                 chartConfig.dailyRange = 'all';
                 chartConfig.selectedMonth = '';
@@ -2158,13 +2252,21 @@
         function applyCustomDateFilter() {
             const start = document.getElementById('custom-start-date').value;
             const end = document.getElementById('custom-end-date').value;
-            if (!start && !end) return;
+            if (!start && !end) {
+                alert('กรุณาเลือกวันที่เริ่มต้น หรือ วันที่สิ้นสุด');
+                return;
+            }
 
             chartConfig.dailyRange = 'custom';
             chartConfig.customStart = start;
             chartConfig.customEnd = end;
+            chartConfig.customDays = null;
+            chartConfig.selectedMonth = '';
+
             const mSel = document.getElementById('daily-month-select');
             if (mSel) mSel.value = '';
+            const dInput = document.getElementById('custom-days-input');
+            if (dInput) dInput.value = '';
 
             updateDailyRangeButtonStyles();
             renderDashboard();
@@ -2175,31 +2277,105 @@
             chartConfig.selectedMonth = '';
             chartConfig.customStart = '';
             chartConfig.customEnd = '';
+            chartConfig.customDays = null;
+
             const mSel = document.getElementById('daily-month-select');
             if (mSel) mSel.value = '';
             const cStart = document.getElementById('custom-start-date');
             if (cStart) cStart.value = '';
             const cEnd = document.getElementById('custom-end-date');
             if (cEnd) cEnd.value = '';
+            const dInput = document.getElementById('custom-days-input');
+            if (dInput) dInput.value = '';
 
             updateDailyRangeButtonStyles();
             renderDashboard();
         }
 
         function updateDailyRangeButtonStyles() {
-            ['7', '14', '30', 'all'].forEach(k => {
+            const keys = ['5', '7', '15', '30', 'all'];
+            keys.forEach(k => {
                 const btn = document.getElementById(`filter-btn-${k}`);
                 if (!btn) return;
-                const match = (k === '7' && chartConfig.dailyRange === 'last7') ||
-                              (k === '14' && chartConfig.dailyRange === 'last14') ||
+                const match = (k === '5' && chartConfig.dailyRange === 'last5') ||
+                              (k === '7' && chartConfig.dailyRange === 'last7') ||
+                              (k === '15' && chartConfig.dailyRange === 'last15') ||
                               (k === '30' && chartConfig.dailyRange === 'last30') ||
                               (k === 'all' && chartConfig.dailyRange === 'all');
                 if (match) {
-                    btn.className = "px-2.5 py-1 rounded-md bg-primary-600 text-white font-semibold shadow-xs transition-all";
+                    btn.className = "px-2.5 py-1 rounded-md bg-primary-600 text-white font-semibold shadow-xs transition-all cursor-pointer";
                 } else {
-                    btn.className = "px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs";
+                    btn.className = "px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-500 font-medium transition-all shadow-xs cursor-pointer";
                 }
             });
+
+            // Highlight custom days container if active
+            const daysBox = document.getElementById('custom-days-container');
+            if (daysBox) {
+                if (chartConfig.dailyRange === 'customDays') {
+                    daysBox.className = "flex items-center gap-1 bg-primary-50 border-2 border-primary-500 rounded-lg px-2 py-0.5 shadow-xs transition-all ml-1";
+                } else {
+                    daysBox.className = "flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 shadow-xs transition-all ml-1";
+                }
+            }
+
+            // Highlight custom date container if active
+            const dateBox = document.getElementById('custom-date-container');
+            if (dateBox) {
+                if (chartConfig.dailyRange === 'custom') {
+                    dateBox.className = "flex items-center gap-1 bg-primary-50 border-2 border-primary-500 rounded-lg px-2 py-0.5 shadow-xs transition-all";
+                } else {
+                    dateBox.className = "flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 shadow-xs transition-all";
+                }
+            }
+
+            // Update Active Range Banner Text
+            updateActiveRangeBanner();
+        }
+
+        function updateActiveRangeBanner() {
+            const textEl = document.getElementById('active-range-text');
+            if (!textEl) return;
+
+            const items = getCurrentActiveItems();
+            const totalCount = (summaryData.daily || []).length;
+            const currentCount = items.length;
+
+            if (currentMode !== 'daily') {
+                const modeName = currentMode === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน';
+                textEl.innerHTML = `<i class="fa-solid fa-calendar text-primary-600"></i> แสดงภาพรวม <strong>${modeName}</strong> ทั้งหมด (${currentCount} งวด)`;
+                return;
+            }
+
+            let rangeLabel = '';
+            if (chartConfig.dailyRange === 'last5') {
+                rangeLabel = `5 วันล่าสุด`;
+            } else if (chartConfig.dailyRange === 'last7') {
+                rangeLabel = `7 วันล่าสุด`;
+            } else if (chartConfig.dailyRange === 'last15') {
+                rangeLabel = `15 วันล่าสุด`;
+            } else if (chartConfig.dailyRange === 'last30') {
+                rangeLabel = `30 วันล่าสุด`;
+            } else if (chartConfig.dailyRange === 'customDays') {
+                rangeLabel = `${chartConfig.customDays} วันล่าสุด (กำหนดเอง)`;
+            } else if (chartConfig.dailyRange === 'custom') {
+                const s = chartConfig.customStart ? formatThaiDateStr(chartConfig.customStart) : '';
+                const e = chartConfig.customEnd ? formatThaiDateStr(chartConfig.customEnd) : '';
+                rangeLabel = `ช่วงวันที่ ${s || 'เริ่มต้น'} ถึง ${e || 'ปัจจุบัน'}`;
+            } else if (chartConfig.dailyRange === 'month') {
+                rangeLabel = `ประจำเดือน ${chartConfig.selectedMonth}`;
+            } else {
+                rangeLabel = `ข้อมูลทั้งหมด`;
+            }
+
+            let dateSpan = '';
+            if (items.length > 0) {
+                const firstDate = items[0].displayDate || items[0].date;
+                const lastDate = items[items.length - 1].displayDate || items[items.length - 1].date;
+                dateSpan = `(${firstDate} - ${lastDate})`;
+            }
+
+            textEl.innerHTML = `<i class="fa-solid fa-filter text-primary-600"></i> ช่วงเวลา: <strong class="text-primary-700">${rangeLabel}</strong> <span class="text-slate-400">|</span> แสดง <strong>${currentCount}</strong> จาก ${totalCount} วัน ${dateSpan ? `<span class="text-slate-500 font-normal ml-1">${dateSpan}</span>` : ''}`;
         }
 
         // Focus on a specific day (zoom in around that date)
@@ -2234,6 +2410,7 @@
             updateKPICards(list);
             updateCharts(list);
             renderTable(list);
+            updateDailyRangeButtonStyles();
         }
 
         // Update KPI Cards
@@ -3685,10 +3862,8 @@
             resizeTimer = setTimeout(() => {
                 if (mainChart) {
                     mainChart.resize();
-                    if (summaryData && summaryData.daily && summaryData.daily.length > 0) {
-                        const items = currentMode === 'daily' 
-                            ? (filteredDailyRecords || summaryData.daily) 
-                            : (summaryData[currentMode] || []);
+                    if (summaryData) {
+                        const items = getCurrentActiveItems();
                         updateCharts(items);
                     }
                 }
