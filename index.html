@@ -1689,8 +1689,8 @@
                     const val = snapshot.val();
                     if (val) {
                         const records = Object.keys(val).map(k => ({
-                            id: k,
-                            ...val[k]
+                            ...val[k],
+                            id: k
                         }));
                         rawRecords = records;
                         summaryData = computeAggregationsLocally(records);
@@ -3422,9 +3422,50 @@
             }
         });
 
+        // ใช้วันที่ตามเวลาท้องถิ่น (ไม่ใช้ UTC เพื่อไม่ให้วันที่เลื่อนช่วงก่อน 07:00 น.)
+        function toLocalISODate(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
         function setTodayDate() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('entry-date').value = today;
+            document.getElementById('entry-date').value = toLocalISODate(new Date());
+        }
+
+        // ==========================================
+        // วันหยุดทำการ: เสาร์-อาทิตย์ + วันหยุดราชการไทยแบบวันที่คงที่
+        // (วันหยุดทางจันทรคติ เช่น มาฆบูชา วิสาขบูชา อาสาฬหบูชา เพิ่มได้ใน EXTRA_HOLIDAYS)
+        // ==========================================
+        const FIXED_THAI_HOLIDAYS = ['01-01', '04-06', '04-13', '04-14', '04-15', '05-01', '06-03', '07-28', '08-12', '10-13', '10-23', '12-05', '12-10', '12-31'];
+        const EXTRA_HOLIDAYS = []; // รูปแบบ 'YYYY-MM-DD'
+
+        // แปลงปี พ.ศ. ที่อาจพิมพ์มา (เช่น 2569) เป็น ค.ศ.
+        function normalizeEntryDate(dateStr) {
+            if (!dateStr) return dateStr;
+            const [y, m, d] = dateStr.split('-');
+            let year = parseInt(y, 10);
+            if (year > 2400) year -= 543;
+            return `${year}-${m}-${d}`;
+        }
+
+        function getHolidayReason(dateStr) {
+            const dt = new Date(dateStr + 'T00:00:00');
+            const dow = dt.getDay();
+            if (dow === 6) return 'วันเสาร์';
+            if (dow === 0) return 'วันอาทิตย์';
+            if (FIXED_THAI_HOLIDAYS.includes(dateStr.slice(5)) || EXTRA_HOLIDAYS.includes(dateStr)) return 'วันหยุดราชการ';
+            return null;
+        }
+
+        function getNextWorkingDay(dateStr) {
+            const dt = new Date(dateStr + 'T00:00:00');
+            let cur = toLocalISODate(dt);
+            let guard = 0;
+            while (getHolidayReason(cur) && guard < 30) {
+                dt.setDate(dt.getDate() + 1);
+                cur = toLocalISODate(dt);
+                guard++;
+            }
+            return cur;
         }
 
         // Form Submit -> Intercept and show Pop-up Confirmation Modal
@@ -3436,7 +3477,7 @@
             }
 
             const id = document.getElementById('entry-id').value;
-            const date = document.getElementById('entry-date').value;
+            let date = normalizeEntryDate(document.getElementById('entry-date').value);
             const income = parseFormattedNumber(document.getElementById('entry-income').value);
             const expense = parseFormattedNumber(document.getElementById('entry-expense').value);
             const balance = parseFormattedNumber(document.getElementById('entry-balance').value);
@@ -3447,18 +3488,44 @@
                 return;
             }
 
+            // ถ้าเป็นวันหยุด -> ย้ายไปบันทึกวันทำการถัดไป (ยกเว้นกำลังแก้ไขรายการเดิมของวันนั้นอยู่แล้ว)
+            let finalNote = note;
+            let shiftedFrom = null;
+            const editingSameDate = currentEditingOriginalRecord && currentEditingOriginalRecord.date === date;
+            const holidayReason = getHolidayReason(date);
+            if (holidayReason && !editingSameDate) {
+                shiftedFrom = date;
+                date = getNextWorkingDay(date);
+                const tag = `ยอดจาก${holidayReason} ${formatThaiDateStr(shiftedFrom)}`;
+                finalNote = note ? `${note} (${tag})` : tag;
+            }
+
+            const existingRecord = shiftedFrom
+                ? (summaryData.daily || []).find(r => r.date === date)
+                : (currentEditingOriginalRecord || (summaryData.daily || []).find(r => r.date === date));
+            const isEdit = !!existingRecord;
+
             const payload = {
-                id,
+                id: shiftedFrom ? (existingRecord ? (existingRecord.id || '') : '') : id,
                 date,
                 income,
                 expense,
                 balance,
-                note,
+                note: finalNote,
                 updatedAt: new Date().toISOString()
             };
 
-            const existingRecord = currentEditingOriginalRecord || (summaryData.daily || []).find(r => r.date === date);
-            const isEdit = !!existingRecord;
+            // วันทำการถัดไปมีข้อมูลอยู่แล้ว -> รวมยอดรับ/จ่ายเข้าด้วยกัน คงยอดคงเหลือของวันทำการนั้น
+            if (shiftedFrom && existingRecord) {
+                payload.income = (existingRecord.income || 0) + income;
+                payload.expense = (existingRecord.expense || 0) + expense;
+                payload.balance = existingRecord.balance;
+                payload.note = [existingRecord.note, finalNote].filter(Boolean).join(' | ');
+            }
+
+            if (shiftedFrom) {
+                alert(`วันที่ ${formatThaiDateStr(shiftedFrom)} เป็น${holidayReason}\nระบบจะบันทึกยอดเป็นวันทำการถัดไป: ${formatThaiDateStr(date)}` + (existingRecord ? '\n(รวมยอดรับ/จ่ายเข้ากับรายการเดิมของวันนั้น)' : ''));
+            }
 
             pendingActionData = {
                 action: isEdit ? 'edit' : 'save',
