@@ -2656,7 +2656,17 @@
                     order: 2,
                     datalabels: {
                         display: chartConfig.showDataLabels,
-                        align: isLineType ? 'top' : 'center',
+                        align: (context) => {
+                            if (!isLineType) return 'top';
+                            if (!chartConfig.showExpense) return 'top';
+                            const idx = context.dataIndex;
+                            const inc = incomeData[idx] || 0;
+                            const exp = expenseData[idx] || 0;
+                            if (inc >= exp) return 'top';
+                            const safeZone = (sharedScale.max - sharedScale.min) * 0.15;
+                            if (inc > sharedScale.min + safeZone) return 'bottom';
+                            return 'top';
+                        },
                         anchor: isLineType ? 'center' : 'end',
                         offset: isMobile ? 5 : 8,
                         color: '#15803d',
@@ -2692,8 +2702,20 @@
                     order: 3,
                     datalabels: {
                         display: chartConfig.showDataLabels,
-                        align: isLineType ? 'bottom' : 'center',
-                        anchor: isLineType ? 'center' : 'start',
+                        align: (context) => {
+                            if (!isLineType) return 'top';
+                            // If Income is not shown, always place on top to prevent collision with dates
+                            if (!chartConfig.showIncome) return 'top';
+                            const idx = context.dataIndex;
+                            const exp = expenseData[idx] || 0;
+                            const inc = incomeData[idx] || 0;
+                            if (exp > inc) return 'top';
+                            const safeZone = (sharedScale.max - sharedScale.min) * 0.15;
+                            // Only align bottom if point is high enough above x-axis to never hit date labels
+                            if (exp > sharedScale.min + safeZone) return 'bottom';
+                            return 'top';
+                        },
+                        anchor: isLineType ? 'center' : 'end',
                         offset: isMobile ? 5 : 8,
                         color: '#b91c1c',
                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -2728,8 +2750,15 @@
                     order: 4,
                     datalabels: {
                         display: chartConfig.showDataLabels,
-                        align: 'bottom',
-                        anchor: 'center',
+                        align: (context) => {
+                            if (!isLineType) return 'top';
+                            const val = netData[context.dataIndex] || 0;
+                            if (val >= 0) return 'top';
+                            const safeZone = (sharedScale.max - sharedScale.min) * 0.15;
+                            if (val < sharedScale.min + safeZone) return 'top';
+                            return 'bottom';
+                        },
+                        anchor: isLineType ? 'center' : 'end',
                         offset: isMobile ? 5 : 8,
                         color: '#7e22ce',
                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -2764,7 +2793,7 @@
                     layout: {
                         padding: {
                             top: isMobile ? 20 : 32,
-                            bottom: isMobile ? 8 : 12,
+                            bottom: isMobile ? 12 : 16,
                             left: isMobile ? 4 : 10,
                             right: isMobile ? 6 : 15
                         }
@@ -2802,7 +2831,8 @@
                                 font: { family: 'Prompt', size: isMobile ? 9 : 11 },
                                 maxRotation: 45,
                                 autoSkip: true,
-                                maxTicksLimit: isMobile ? 6 : (isTablet ? 10 : 15)
+                                maxTicksLimit: isMobile ? 6 : (isTablet ? 10 : 15),
+                                padding: isMobile ? 8 : 10
                             }
                         },
                         y: {
